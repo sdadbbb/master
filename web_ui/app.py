@@ -7,6 +7,8 @@ from datetime import datetime
 from log.logger import LoggerUtil
 
 # 创建 Flask 应用时指定模板编码
+from util.file_util import FileUtil
+
 app = Flask(__name__, template_folder='templates')
 app.config['JSON_AS_ASCII'] = False  # 支持中文 JSON
 
@@ -15,7 +17,7 @@ logger = LoggerUtil.get_logger()
 running_tasks = {}
 
 # 你的 pytest 配置的报告目录（改成你实际配置的位置）
-REPORT_DIR = r'D:\pythonProject2\reports'  # ← 改成你 pytest 生成报告的实际路径
+REPORT_DIR = FileUtil.get_report_dir()  # ← 改成你 pytest 生成报告的实际路径
 
 # 验证报告目录
 if not os.path.exists(REPORT_DIR):
