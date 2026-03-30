@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动化测试平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .test-list {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .test-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .test-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .test-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-info {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #3182ce;
+        }
+
+        .result-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .result-area pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .status-running {
+            color: #ed8936;
+            font-weight: bold;
+        }
+
+        .status-success {
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            color: #f56565;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .report-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #edf2f7;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .report-link:hover {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 自动化测试平台</h1>
+            <p>选择测试用例并执行，实时查看测试结果和报告</p>
+        </div>
+
+        <div class="test-list" id="testList">
+            <h2 style="margin-bottom: 20px; color: #333;">📋 测试用例列表</h2>
+            <p style="color: #666;">加载中...</p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <div class="test-list">
+                <h2 style="margin-bottom: 20px; color: #333;">📊 最新测试报告</h2>
+                <div id="latestReports">
+                    <p style="color: #666;">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tests = [];
+        let reports = [];
+
+        // 加载测试用例列表
+        function loadTests() {
+            fetch('/api/tests')
+                .then(res => res.json())
+                .then(data => {
+                    tests = data.data;
+                    renderTestList();
+                })
+                .catch(error => {
+                    console.error('加载测试列表失败:', error);
+                    document.getElementById('testList').innerHTML =
+                        '<p style="color: red;">加载失败，请刷新页面重试</p>';
+                });
+        }
+
+        // 加载报告列表
+        function loadReports() {
+            fetch('/api/reports')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        reports = data.data;
+                        renderReportList();
+                    }
+                })
+                .catch(error => {
+                    console.error('加载报告列表失败:', error);
+                });
+        }
+
+        // 渲染测试列表
+        function renderTestList() {
+            const container = document.getElementById('testList');
+            let html = '<h2 style="margin-bottom: 20px; color: #333;">📋 测试用例列表</h2>';
+
+            if (tests.length === 0) {
+                html += '<p style="color: #666;">暂无测试用例</p>';
+            } else {
+                tests.forEach(test => {
+                    html += `
+                        <div class="test-item">
+                            <div class="test-name">${test.name}</div>
+                            <div style="margin-bottom: 15px;">
+                                <button class="btn btn-primary" onclick="runTest('${test.name}')">
+                                    ▶️ 执行测试
+                                </button>
+                                <button class="btn btn-success" onclick="goToReports()">
+                                    📊 查看所有报告
+                                </button>
+                            </div>
+                            <div id="status_${test.name}" style="margin-bottom: 10px;"></div>
+                            <div class="result-area" id="result_${test.name}">
+                                <pre></pre>
+                            </div>
+                            <div id="report_link_${test.name}" style="display: none;">
+                                <a href="#" class="report-link" onclick="viewLatestReport(); return false;">
+                                    📄 查看刚才生成的报告
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 渲染报告列表
+        function renderReportList() {
+            const container = document.getElementById('latestReports');
+
+            if (reports.length === 0) {
+                container.innerHTML = '<p style="color: #666;">暂无测试报告</p>';
+                return;
+            }
+
+            // 只显示最近 5 个报告
+            const recentReports = reports.slice(0, 5);
+            let html = '<div style="max-height: 300px; overflow-y: auto;">';
+
+            recentReports.forEach((report, index) => {
+                html += `
+                    <div style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <div style="font-weight: bold; margin-bottom: 5px;">
+                            📄 ${report.filename}
+                        </div>
+                        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
+                            ${formatSize(report.size)} | ${report.created_time}
+                        </div>
+                        <a href="/view_report?file=${report.filename}"
+                           class="btn btn-primary"
+                           target="_blank"
+                           style="padding: 6px 15px; font-size: 13px;">
+                            👁️ 查看
+                        </a>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            if (reports.length > 5) {
+                html += `<p style="text-align: center; margin-top: 15px; color: #666;">
+                    共 ${reports.length} 个报告，仅显示最近 5 个
+                </p>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 执行测试
+        function runTest(testName) {
+            const statusDiv = document.getElementById(`status_${testName}`);
+            const resultDiv = document.getElementById(`result_${testName}`);
+            const resultPre = resultDiv.querySelector('pre');
+            const reportLinkDiv = document.getElementById(`report_link_${testName}`);
+
+            // 清除之前的定时器（如果有）
+            if (window.currentPollInterval) {
+                clearInterval(window.currentPollInterval);
+            }
+
+            statusDiv.innerHTML = '<span class="loading"></span><span class="status-running">测试执行中...</span>';
+            resultDiv.style.display = 'block';
+            resultPre.innerText = '测试正在执行，请稍候...';
+            reportLinkDiv.style.display = 'none';
+
+            fetch('/api/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    test_name: testName,
+                    report: true
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const taskId = data.task_id;
+                console.log(`任务已提交：${taskId}`);
+
+                let pollCount = 0;
+                const maxPollCount = 300; // 最多轮询 300 次（5 分钟）
+
+                // 使用递归 setTimeout 代替 setInterval，更可控
+                function pollStatus() {
+                    pollCount++;
+
+                    if (pollCount > maxPollCount) {
+                        console.error('轮询超时');
+                        resultPre.innerText = '测试执行超时，请稍后查看报告';
+                        return;
+                    }
+
+                    fetch(`/api/status/${taskId}`)
+                        .then(res => res.json())
+                        .then(statusData => {
+                            const status = statusData.data.status;
+
+                            if (status === 'completed' || status === 'error') {
+                                // 任务完成，停止轮询
+                                if (statusData.data.success) {
+                                    statusDiv.innerHTML = '<span class="status-success">✅ 测试通过</span>';
+                                } else {
+                                    statusDiv.innerHTML = '<span class="status-failed">❌ 测试失败</span>';
+                                }
+
+                                resultPre.innerText = statusData.data.output;
+
+                                // 显示报告链接
+                                reportLinkDiv.style.display = 'block';
+
+                                // 重新加载报告列表
+                                setTimeout(loadReports, 1000);
+
+                                console.log(`轮询结束，共请求 ${pollCount} 次`);
+                            } else {
+                                resultPre.innerText = '测试正在执行中...\n\n' + (statusData.data.output || '请稍候...');
+                                // 继续轮询
+                                window.currentPollInterval = setTimeout(pollStatus, 1000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('查询状态失败:', error);
+                            resultPre.innerText = '查询状态失败，请稍后重试';
+                        });
+                }
+
+                // 开始轮询
+                window.currentPollInterval = setTimeout(pollStatus, 1000);
+            })
+            .catch(error => {
+                console.error('提交任务失败:', error);
+                statusDiv.innerHTML = '<span class="status-failed">❌ 提交失败</span>';
+                resultPre.innerText = '错误：' + error.message;
+            });
+        }
+
+        // 查看最新报告
+        function viewLatestReport() {
+            if (reports.length > 0) {
+                window.open(`/view_report?file=${reports[0].filename}`, '_blank');
+            }
+        }
+
+        // 跳转到报告页面
+        function goToReports() {
+            window.location.href = '/reports';
+        }
+
+        // 格式化文件大小
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // 页面加载时获取测试列表和报告列表
+        loadTests();
+        loadReports();
+    </script>
+</body>
+</html>

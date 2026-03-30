@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试报告列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .header a:hover {
+            text-decoration: underline;
+        }
+
+        .report-list {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .report-item {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .report-item:last-child {
+            border-bottom: none;
+        }
+
+        .report-item:hover {
+            background: #f7fafc;
+            transform: translateX(10px);
+        }
+
+        .report-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .report-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 测试报告列表</h1>
+            <p style="margin-top: 10px;">
+                <a href="/">← 返回首页</a>
+            </p>
+        </div>
+
+        <div class="report-list" id="reportList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 加载报告列表
+        function loadReports() {
+            fetch('/api/reports')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderReports(data.data);
+                    } else {
+                        document.getElementById('reportList').innerHTML =
+                            `<div class="empty">❌ ${data.message}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('加载报告失败:', error);
+                    document.getElementById('reportList').innerHTML =
+                        '<div class="empty">❌ 加载失败，请刷新重试</div>';
+                });
+        }
+
+        // 渲染报告列表
+        function renderReports(reports) {
+            const container = document.getElementById('reportList');
+
+            if (reports.length === 0) {
+                container.innerHTML = '<div class="empty">暂无测试报告</div>';
+                return;
+            }
+
+            let html = '';
+            reports.forEach(report => {
+                html += `
+                    <div class="report-item">
+                        <div class="report-name">📄 ${report.filename}</div>
+                        <div class="report-info">
+                            文件大小：${formatSize(report.size)} |
+                            创建时间：${report.created_time} |
+                            修改时间：${report.modified_time || report.created_time}
+                        </div>
+                        <a href="/view_report?file=${report.filename}"
+                           class="btn btn-primary"
+                           target="_blank">
+                            👁️ 查看报告
+                        </a>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 格式化文件大小
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // 页面加载时获取报告列表
+        loadReports();
+    </script>
+</body>
+</html>

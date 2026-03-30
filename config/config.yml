@@ -1,0 +1,18 @@
+login:
+  users:
+    - username: superadmin
+      password: admin123
+    - username: user1
+      password: password1
+    - username: user2
+      password: password2
+  url: http://192.168.2.114:93/
+  expected_text: 欢迎使用智能工具管理系统，让管理更高效，让工作更轻松
+  error_texts:
+    - 用户不存在/密码错误
+    - 用户名或密码错误
+    - 登录失败
+    - 账号不存在
+driver:
+  browser: edge
+
