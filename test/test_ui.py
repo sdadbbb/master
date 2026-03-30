@@ -32,10 +32,6 @@ def driver_setup():
 
 @pytest.fixture(scope="function")
 def logged_in_driver(driver_setup):
-    """
-    已登录的 driver fixture
-    如果登录成功，返回 driver；否则跳过测试
-    """
     driver = driver_setup
     username = config['login']['users'][0]['username']
     password = config['login']['users'][0]['password']
@@ -49,8 +45,7 @@ def logged_in_driver(driver_setup):
             config['login']['expected_text'],
             config['login'].get('error_texts', [])
         )
-        
-        # 登录截图
+
         screenshot_path = ScreenshotUtil.save_screenshot_always(
             driver,
             SCREENSHOT_DIR,
@@ -77,7 +72,6 @@ def logged_in_driver(driver_setup):
 
 
 class TestLogin:
-    """登录测试类"""
 
     @pytest.mark.parametrize("username,password", [
         (user['username'], user['password'])
@@ -99,8 +93,7 @@ class TestLogin:
                 config['login']['expected_text'],
                 config['login'].get('error_texts', [])
             )
-            
-            # 登录截图
+
             screenshot_path = ScreenshotUtil.save_screenshot_always(
                 driver_setup,
                 SCREENSHOT_DIR,
@@ -142,9 +135,7 @@ class TestConfig:
             config_page.click_button_add()
             assert config_page.find_element_by_text('添加物资类型').text == '添加物资类型'
             logger.info("成功打开新增界面")
-
             time.sleep(1)
-            # 操作截图
             screenshot_path = ScreenshotUtil.save_screenshot_always(
                 logged_in_driver,
                 SCREENSHOT_DIR,
@@ -156,7 +147,6 @@ class TestConfig:
             
         except Exception as e:
             logger.error(f"❌ 新增测试失败：{str(e)}")
-            # 失败截图
             screenshot_path = ScreenshotUtil.save_screenshot_always(
                 logged_in_driver,
                 SCREENSHOT_DIR,

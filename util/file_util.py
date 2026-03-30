@@ -3,7 +3,6 @@ import os
 
 
 class FileUtil:
-    """文件操作工具类"""
 
     @staticmethod
     def read_yaml(file_path):
