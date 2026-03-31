@@ -53,42 +53,60 @@ class base_page:
         element.clear()
         element.send_keys(text)
 
+    def input_by_placeholder(self, aria_label, placeholder, text, timeout=10):
+        """
+        :param aria_label: 弹窗标题
+        :param placeholder: 弹窗内的输入框提示词
+        :param text: 想输入的文本
+        :param timeout: 等待时间
+        :return:
+        """
+        locator = (
+        By.XPATH, f'//div[@role="dialog" and @aria-label="{aria_label}"]//input[@placeholder="{placeholder}"]')
+        element = self.wait_element(locator, timeout)
+        element.clear()
+        element.send_keys(text)
+
     def get_element_text(self, locator, timeout=10):
         element = self.wait_element(locator, timeout)
         return element.text
 
-    def click_button_by_text(self, button_text, timeout=10):
+    def click_button_by_text(self, button_text, aria_label=None, timeout=10):
         """
         根据按钮文本点击按钮（支持多种标签类型）
+        :param aria_label: 弹窗标题
         :param button_text: 按钮上显示的文本
         :param timeout: 等待超时时间（秒）
         """
-        locators = [
-            (By.XPATH, f"//button[contains(., '{button_text}')]"),
-            # button 标签，包含文本
-            (By.XPATH, f"//button[contains(text(), '{button_text}')]"),
-            # input type=button，value 属性匹配
-            (By.XPATH, f"//input[@type='button' and @value='{button_text}']"),
-            # a 标签，当作按钮使用
-            (By.XPATH, f"//a[text()='{button_text}']"),
-            # 任何包含按钮文本的元素（通用）
-            (By.XPATH, f"//*[text()='{button_text}' and contains(@class, 'btn')]"),
-            # 通过 aria-label 查找
-            (By.XPATH, f"//*[@aria-label='{button_text}']"),
-            # 通过 title 属性查找
-            (By.XPATH, f"//*[@title='{button_text}']"),
-        ]
-
+        if aria_label is not None:
+            locators = [
+                    (By.XPATH, f"//div[contains(@class,'el-dialog__wrapper') and not(contains(@style,'display: none'))]//div[@aria-label='{aria_label}']//span[normalize-space()='{button_text}']")
+            ]
+        else:
+            locators = [
+                (By.XPATH, f"//button[contains(., '{button_text}')]"),
+                # button 标签，包含文本
+                (By.XPATH, f"//button[contains(text(), '{button_text}')]"),
+                # input type=button，value 属性匹配
+                (By.XPATH, f"//input[@type='button' and @value='{button_text}']"),
+                # a 标签，当作按钮使用
+                (By.XPATH, f"//a[text()='{button_text}']"),
+                # 任何包含按钮文本的元素（通用）
+                (By.XPATH, f"//*[text()='{button_text}' and contains(@class, 'btn')]"),
+            ]
         # 依次尝试每个定位器
         for locator in locators:
             try:
-                element = self.wait_element(locator, timeout=2)
+                logger.info(f"🔍 尝试选择器：{locator}")
+                element = self.wait_element(locator, timeout=10)
                 if element.is_displayed() and element.is_enabled():
                     element.click()
                     logger.info(f"✅ 成功点击按钮：{button_text}")
                     return True
+                logger.info(f"❌ 未找到按钮：{button_text}")
             except Exception:
                 continue
+
 
         # 如果所有定位器都失败，抛出异常
         raise TimeoutException(f"无法找到并点击按钮：{button_text}")
@@ -128,7 +146,7 @@ class base_page:
         element = self.wait_element(locator, timeout)
         logger.info(f"✅ 找到包含文本 '{text}' 的 {tag_name} 元素")
         return element
-    
+
     def find_contains_text_element(self, text, tag_name='*', timeout=10):
         """
         根据包含的文本内容查找元素（支持模糊匹配）
@@ -141,7 +159,7 @@ class base_page:
         element = self.wait_element(locator, timeout)
         logger.info(f"✅ 找到包含文本 '{text}' 的 {tag_name} 元素")
         return element
-    
+
     def find_elements_by_text(self, text, tag_name='*', timeout=10):
         """
         根据文本内容查找所有匹配的元素

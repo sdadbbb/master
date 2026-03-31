@@ -35,12 +35,12 @@ def logged_in_driver(driver_setup):
     driver = driver_setup
     username = config['login']['users'][0]['username']
     password = config['login']['users'][0]['password']
-    
+
     try:
         mt_page = MoutumPage(driver)
         mt_page.go_url(config['login']['url'])
         mt_page.login(username, password)
-        
+
         result = mt_page.check_login_result(
             config['login']['expected_text'],
             config['login'].get('error_texts', [])
@@ -53,13 +53,13 @@ def logged_in_driver(driver_setup):
             result['status']
         )
         logger.info(f"登录截图：{screenshot_path}")
-        
+
         if result['status'] != 'success':
             pytest.skip(f"登录失败，跳过后续测试：{result['message']}")
-        
+
         logger.info("✅ 登录成功，继续执行测试")
         return driver
-        
+
     except Exception as e:
         logger.error(f"登录过程出错：{str(e)}")
         ScreenshotUtil.save_screenshot_always(
@@ -79,16 +79,16 @@ class TestLogin:
     ])
     def test_login_only(self, driver_setup, username, password):
         """只测试登录功能"""
-        logger.info(f"{'='*50}")
+        logger.info(f"{'=' * 50}")
         logger.info(f"测试登录：{username}")
-        logger.info(f"{'='*50}")
-        
+        logger.info(f"{'=' * 50}")
+
         mt_page = MoutumPage(driver_setup)
-        
+
         try:
             mt_page.go_url(config['login']['url'])
             mt_page.login(username, password)
-            
+
             result = mt_page.check_login_result(
                 config['login']['expected_text'],
                 config['login'].get('error_texts', [])
@@ -102,9 +102,9 @@ class TestLogin:
             )
             logger.info(f"登录结果：{result['status']} - {result['message']}")
             logger.info(f"截图路径：{screenshot_path}")
-            
+
             assert result['status'] in ['success', 'failed'], f"登录出现异常状态：{result['message']}"
-            
+
         except Exception as e:
             logger.error(f"登录测试失败：{str(e)}")
             ScreenshotUtil.save_screenshot_always(
@@ -121,30 +121,40 @@ class TestLogin:
 class TestConfig:
 
     def test_add_config(self, logged_in_driver):
-        logger.info(f"{'='*50}")
+        logger.info(f"{'=' * 50}")
         logger.info(f"测试用例：test_add_config")
-        logger.info(f"{'='*50}")
-        
+        logger.info(f"{'=' * 50}")
+
         config_page = ConfigPage(logged_in_driver)
         username = config['login']['users'][0]['username']
-        
+
         try:
             config_page.get_goods_type('初始配置')
             config_page.get_goods_type('物资配置')
             config_page.get_goods_type('物资类型')
+            ScreenshotUtil.save_screenshot_always(logged_in_driver,
+                                                  SCREENSHOT_DIR,
+                                                  "初始页面",
+                                                  'success')
             config_page.click_button_add()
             assert config_page.find_element_by_text('添加物资类型').text == '添加物资类型'
             logger.info("成功打开新增界面")
-            time.sleep(1)
+            config_page.input_by_placeholder("添加物资类型", "请输入类型名称", "工具包")
+            config_page.input_by_placeholder("添加物资类型", "请输入标识位", "toolPack")
             screenshot_path = ScreenshotUtil.save_screenshot_always(
                 logged_in_driver,
                 SCREENSHOT_DIR,
-                f"{username}_add_config",
+                f"{username}新增页面截图",
                 'success'
             )
-            logger.info(f"配置截图：{screenshot_path}")
-            logger.info("✅ 配置添加完成")
-            
+            logger.info(f"新增页面截图：{screenshot_path}")
+            config_page.click_button_by_text("确 定", aria_label="添加物资类型")
+            time.sleep(1)
+            config_page.click_button_by_text("搜索")
+            time.sleep(1)
+            assert config_page.find_element_by_text('工具包').text == '工具包'
+
+
         except Exception as e:
             logger.error(f"❌ 新增测试失败：{str(e)}")
             screenshot_path = ScreenshotUtil.save_screenshot_always(
@@ -157,7 +167,7 @@ class TestConfig:
             raise e
         finally:
             logger.info(f"测试结束\n")
-    
+
     # def test_edit_config(self, logged_in_driver):
     #     """测试编辑配置"""
     #     logger.info("测试编辑配置")
@@ -166,7 +176,10 @@ class TestConfig:
     #
     #     # TODO: 添加你的编辑操作
     #     # config_page.edit_existing_config()
-    #
+    #     config_page.get_goods_type('初始配置')
+    #     config_page.get_goods_type('物资配置')
+    #     config_page.get_goods_type('物资类型')
+    #     config_page.click_button_add()
     #     logger.info("配置编辑完成")
 
     # def test_delete_config(self, logged_in_driver):
