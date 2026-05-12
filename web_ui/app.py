@@ -49,15 +49,15 @@ def get_tests():
         logger.info(f"找到 {len(tests)} 个测试用例：{[t['name'] for t in tests]}")
         return jsonify({'success': True, 'data': tests})
     except Exception as e:
-        logger.error(f"获取测试用例失败：{str(e)}")
+        logger.exception(f"获取测试用例失败：{str(e)}")
         return jsonify({'success': False, 'message': str(e)})
+
 
 
 @app.route('/api/run', methods=['POST'])
 def run_test():
     data = request.json
     test_name = data.get('test_name', 'test_ui')
-    
     task_id = f"{test_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
     logger.info("=" * 60)
@@ -141,7 +141,7 @@ def run_test():
                 }
                 
         except subprocess.TimeoutExpired:
-            logger.error(f"⏰ 任务 {task_id} 执行超时")
+            logger.exception(f"⏰ 任务 {task_id} 执行超时")
             running_tasks[task_id] = {
                 'status': 'error',
                 'success': False,
@@ -149,7 +149,7 @@ def run_test():
                 'report_path': None
             }
         except UnicodeDecodeError as e:
-            logger.error(f"❌ 任务 {task_id} 编码解码错误：{str(e)}")
+            logger.exception(f"❌ 任务 {task_id} 编码解码错误：{str(e)}")
             running_tasks[task_id] = {
                 'status': 'error',
                 'success': False,
@@ -157,7 +157,7 @@ def run_test():
                 'report_path': None
             }
         except Exception as e:
-            logger.error(f"❌ 任务 {task_id} 执行异常：{str(e)}")
+            logger.exception(f"❌ 任务 {task_id} 执行异常：{str(e)}")
             running_tasks[task_id] = {
                 'status': 'error',
                 'success': False,

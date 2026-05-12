@@ -129,7 +129,7 @@ class TestConfig:
         username = config['login']['users'][0]['username']
 
         try:
-            config_page.get_goods_type('初始配置')
+            config_page.get_goods_type('初始化设置')
             config_page.get_goods_type('物资配置')
             config_page.get_goods_type('物资类型')
             ScreenshotUtil.save_screenshot_always(logged_in_driver,

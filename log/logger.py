@@ -37,13 +37,20 @@ class LoggerUtil:
         file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(log_level)
 
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        # 详细格式：包含文件名、行号、函数名
+        detailed_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d - %(funcName)s()] - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
 
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
+        # 简洁格式：只显示文件和行号
+        simple_formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+
+        console_handler.setFormatter(simple_formatter)
+        file_handler.setFormatter(detailed_formatter)
 
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
