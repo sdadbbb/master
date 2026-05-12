@@ -92,8 +92,12 @@ def run_test():
     def run_command(task_id):
         logger.info(f"任务 {task_id} 开始执行...")
         try:
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            # Windows 专属配置：隐藏命令行窗口
+            if os.name == 'nt':
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            else:
+                startupinfo = None
 
             # 设置环境变量强制使用 UTF-8
             env = os.environ.copy()
