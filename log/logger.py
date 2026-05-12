@@ -25,6 +25,9 @@ class LoggerUtil:
         os.makedirs(log_dir, exist_ok=True)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         log_file = os.path.join(log_dir, f'test_{timestamp}.log')
+        
+        # 总日志文件（无限追加，保存所有日志）
+        all_log_file = os.path.join(log_dir, 'all.log')
 
         logger = logging.getLogger('TestLogger')
         logger.setLevel(log_level)
@@ -37,13 +40,16 @@ class LoggerUtil:
         file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(log_level)
 
-        # 详细格式：包含文件名、行号、函数名
+        # 总日志文件处理器（无限追加）
+        all_file_handler = logging.FileHandler(all_log_file, encoding='utf-8', mode='a')
+        all_file_handler.setLevel(log_level)
+
+        # 详细格式：用于文件日志（包含文件名、行号、函数名）
         detailed_formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d - %(funcName)s()] - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
 
-        # 简洁格式：只显示文件和行号
         simple_formatter = logging.Formatter(
             '%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
@@ -51,15 +57,18 @@ class LoggerUtil:
 
         console_handler.setFormatter(simple_formatter)
         file_handler.setFormatter(detailed_formatter)
+        all_file_handler.setFormatter(detailed_formatter)
 
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
+        logger.addHandler(all_file_handler)
 
         LoggerUtil._logger = logger
 
-        logger.info(f"=" * 50)
-        logger.info(f"测试开始 - 日志文件：{log_file}")
-        logger.info(f"=" * 50)
+        logger.info("=" * 50)
+        logger.info(f"测试开始 - 本次日志文件：{log_file}")
+        logger.info(f"总日志文件：{all_log_file}")
+        logger.info("=" * 50)
 
         return logger
 
