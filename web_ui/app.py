@@ -3,21 +3,22 @@ import subprocess
 import os
 import threading
 from datetime import datetime
+from multiprocessing import Manager  # 导入 Manager
 
 from log.logger import LoggerUtil
 
 # 创建 Flask 应用时指定模板编码
 from util.file_util import FileUtil
 
+manager = Manager()
+running_tasks = manager.dict()
 app = Flask(__name__, template_folder='templates')
 app.config['JSON_AS_ASCII'] = False  # 支持中文 JSON
 
 logger = LoggerUtil.get_logger()
-# 存储正在运行的测试任务
-running_tasks = {}
 
 # 你的 pytest 配置的报告目录（改成你实际配置的位置）
-REPORT_DIR = FileUtil.get_report_dir()  # ← 改成你 pytest 生成报告的实际路径
+REPORT_DIR = FileUtil.get_report_dir()
 
 if not os.path.exists(REPORT_DIR):
     logger.warning(f"报告目录不存在，将创建：{REPORT_DIR}")
