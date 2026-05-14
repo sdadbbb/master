@@ -115,6 +115,48 @@
             padding: 50px;
             color: #999;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            padding: 20px;
+            gap: 10px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            margin: 0 15px;
+        }
     </style>
 </head>
 <body>
@@ -132,13 +174,16 @@
     </div>
 
     <script>
-        // 加载报告列表
-        function loadReports() {
-            fetch('/api/reports')
+        let currentPage = 1;
+        const perPage = 10;
+
+        function loadReports(page = 1) {
+            fetch(`/api/reports?page=${page}&per_page=${perPage}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         renderReports(data.data);
+                        renderPagination(data.pagination);
                     } else {
                         document.getElementById('reportList').innerHTML =
                             `<div class="empty">❌ ${data.message}</div>`;
@@ -151,7 +196,6 @@
                 });
         }
 
-        // 渲染报告列表
         function renderReports(reports) {
             const container = document.getElementById('reportList');
 
@@ -167,8 +211,7 @@
                         <div class="report-name">📄 ${report.filename}</div>
                         <div class="report-info">
                             文件大小：${formatSize(report.size)} |
-                            创建时间：${report.created_time} |
-                            修改时间：${report.modified_time || report.created_time}
+                            创建时间：${report.created_time}
                         </div>
                         <a href="/view_report?file=${report.filename}"
                            class="btn btn-primary"
@@ -182,15 +225,43 @@
             container.innerHTML = html;
         }
 
-        // 格式化文件大小
+        function renderPagination(pagination) {
+            const container = document.getElementById('reportList');
+
+            if (!pagination || pagination.total === 0) {
+                return;
+            }
+
+            let paginationHtml = `
+                <div class="pagination">
+                    <button onclick="loadReports(1)" ${!pagination.has_prev ? 'disabled' : ''}>
+                        ⏮ 首页
+                    </button>
+                    <button onclick="loadReports(${pagination.page - 1})" ${!pagination.has_prev ? 'disabled' : ''}>
+                        ◀ 上一页
+                    </button>
+                    <span class="pagination-info">
+                        第 ${pagination.page} / ${pagination.total_pages} 页，共 ${pagination.total} 条
+                    </span>
+                    <button onclick="loadReports(${pagination.page + 1})" ${!pagination.has_next ? 'disabled' : ''}>
+                        下一页 ▶
+                    </button>
+                    <button onclick="loadReports(${pagination.total_pages})" ${!pagination.has_next ? 'disabled' : ''}>
+                        末页 ⏭
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML += paginationHtml;
+        }
+
         function formatSize(bytes) {
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
         }
 
-        // 页面加载时获取报告列表
-        loadReports();
+        loadReports(1);
     </script>
 </body>
 </html>

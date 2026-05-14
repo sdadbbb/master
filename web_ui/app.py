@@ -293,6 +293,9 @@ def list_reports():
         logger.error(f"报告目录不存在：{REPORT_DIR}")
         return jsonify({'success': False, 'message': f'报告目录不存在：{REPORT_DIR}'})
     
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
     reports = []
     try:
         for file in os.listdir(REPORT_DIR):
@@ -309,8 +312,26 @@ def list_reports():
 
         reports.sort(key=lambda x: x['created_time'], reverse=True)
         
-        logger.info(f"找到 {len(reports)} 个测试报告")
-        return jsonify({'success': True, 'data': reports})
+        total = len(reports)
+        total_pages = (total + per_page - 1) // per_page
+        
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_reports = reports[start:end]
+        
+        logger.info(f"找到 {total} 个测试报告，第 {page}/{total_pages} 页")
+        return jsonify({
+            'success': True, 
+            'data': paginated_reports,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages
+            }
+        })
     except Exception as e:
         logger.error(f"获取报告列表失败：{str(e)}")
         return jsonify({'success': False, 'message': str(e)})
@@ -350,6 +371,9 @@ def list_screenshots():
         logger.warning(f"截图目录不存在：{screenshot_dir}")
         return jsonify({'success': False, 'message': f'截图目录不存在：{screenshot_dir}'})
     
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 12, type=int)
+    
     screenshots = []
     try:
         for file in os.listdir(screenshot_dir):
@@ -366,8 +390,26 @@ def list_screenshots():
 
         screenshots.sort(key=lambda x: x['created_time'], reverse=True)
         
-        logger.info(f"找到 {len(screenshots)} 个截图")
-        return jsonify({'success': True, 'data': screenshots})
+        total = len(screenshots)
+        total_pages = (total + per_page - 1) // per_page
+        
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_screenshots = screenshots[start:end]
+        
+        logger.info(f"找到 {total} 个截图，第 {page}/{total_pages} 页")
+        return jsonify({
+            'success': True, 
+            'data': paginated_screenshots,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages
+            }
+        })
     except Exception as e:
         logger.error(f"获取截图列表失败：{str(e)}")
         return jsonify({'success': False, 'message': str(e)})
