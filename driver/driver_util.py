@@ -9,28 +9,27 @@ class DriverUtil:
 
     def get_driver(self, driver_name):
         if self._driver is None:
-            import os
-            
-            # 检测是否在无图形界面环境（Linux 服务器）
-            is_headless = not os.environ.get('DISPLAY')
+            # import os
+            #
+            # is_headless = not os.environ.get('DISPLAY')
             
             if driver_name == "firefox":
                 from selenium.webdriver import Firefox
                 from selenium.webdriver.firefox.options import Options as FirefoxOptions
                 options = FirefoxOptions()
-                if is_headless:
-                    options.add_argument('--headless')
+                # if is_headless:
+                #     options.add_argument('--headless')
                 options.add_argument('--start-maximized')
                 self._driver = Firefox(options=options)
             elif driver_name == "chrome":
                 from selenium.webdriver import Chrome
                 from selenium.webdriver.chrome.options import Options as ChromeOptions
                 options = ChromeOptions()
-                if is_headless:
-                    options.add_argument('--headless')
-                    options.add_argument('--no-sandbox')
-                    options.add_argument('--disable-dev-shm-usage')
-                    options.add_argument('--disable-gpu')
+                # if is_headless:
+                #     options.add_argument('--headless')
+                #     options.add_argument('--no-sandbox')
+                #     options.add_argument('--disable-dev-shm-usage')
+                #     options.add_argument('--disable-gpu')
                 options.add_argument('--start-maximized')
                 self._driver = Chrome(options=options)
             elif driver_name == "ie":
@@ -40,8 +39,8 @@ class DriverUtil:
                 from selenium.webdriver import Edge
                 from selenium.webdriver.edge.options import Options as EdgeOptions
                 options = EdgeOptions()
-                if is_headless:
-                    options.add_argument('--headless')
+                # if is_headless:
+                #     options.add_argument('--headless')
                 options.add_argument('--start-maximized')
                 self._driver = Edge(options=options)
         return self._driver
