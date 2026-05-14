@@ -33,6 +33,6 @@ def pytest_runtest_makereport(item, call):
     
     if report.when == 'call':
         if report.passed:
-            LoggerUtil.info(f"✅ 测试通过：{item.name}")
+            LoggerUtil.info(f"测试通过：{item.name}")
         elif report.failed:
-            LoggerUtil.error(f"❌ 测试失败：{item.name}")
+            LoggerUtil.error(f"测试失败：{item.name}")

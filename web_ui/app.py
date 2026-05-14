@@ -10,7 +10,7 @@ from web_ui.task import task_bp
 from web_ui.upload import upload_bp
 
 app = Flask(__name__, template_folder='templates')
-app.config['JSON_AS_ASCII'] = False  # 支持中文 JSON
+app.config['JSON_AS_ASCII'] = False
 app.register_blueprint(case_bp)
 app.register_blueprint(task_bp)
 app.register_blueprint(run_bp)
@@ -30,7 +30,6 @@ else:
 
 @app.before_request
 def log_request_info():
-    """记录请求信息"""
     request.start_time = time.time()
     logger.info("=" * 80)
     logger.info(f" 请求开始: {request.method} {request.path}")
@@ -50,46 +49,32 @@ def log_request_info():
 
 @app.after_request
 def log_response_info(response):
-    """记录响应信息"""
-    # 计算请求处理时间
     if hasattr(request, 'start_time'):
         duration = time.time() - request.start_time
         duration_ms = round(duration * 1000, 2)
     else:
         duration_ms = 0
-    logger.info(f" 响应状态: {response.status_code}")
-    logger.info(f"️  处理时间: {duration_ms}ms")
+    logger.info(f"响应状态: {response.status_code}")
+    logger.info(f"处理时间: {duration_ms}ms")
     if response.content_type:
-        logger.info(f" 内容类型: {response.content_type}")
+        logger.info(f"内容类型: {response.content_type}")
     if response.status_code >= 400:
-        logger.warning(f"  错误响应: {response.status_code} - {request.method} {request.path}")
+        logger.warning(f"错误响应: {response.status_code} - {request.method} {request.path}")
     logger.info("=" * 80)
     return response
 
 
 @app.errorhandler(404)
 def handle_404(error):
-    """处理 404 错误"""
-    logger.warning(f"❌ 404 错误: {request.method} {request.path}")
+    logger.warning(f"错误: {request.method} {request.path}")
     return jsonify({'success': False, 'message': '资源不存在'}), 404
 
 
 @app.errorhandler(500)
 def handle_500(error):
-    """处理 500 错误"""
-    logger.exception(f"💥 500 服务器错误: {request.method} {request.path}\n错误详情: {str(error)}")
+    logger.exception(f"服务器错误: {request.method} {request.path}\n错误详情: {str(error)}")
     return jsonify({'success': False, 'message': '服务器内部错误'}), 500
 
 
 if __name__ == '__main__':
-    logger.info("=" * 60)
-    logger.info("🚀 自动化测试平台启动")
-    logger.info(f"📁 报告目录：{REPORT_DIR}")
-    logger.info("📱 访问地址：http://localhost:5000")
-    logger.info("=" * 60)
-    print("=" * 60)
-    print("🚀 自动化测试平台启动")
-    print(f"📁 报告目录：{REPORT_DIR}")
-    print("📱 访问地址：http://localhost:5000")
-    print("=" * 60)
     app.run(debug=True, port=5000, host='0.0.0.0', use_reloader=False)

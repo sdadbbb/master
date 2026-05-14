@@ -24,7 +24,6 @@ class FileUtil:
         :param file_path: YAML 文件路径
         :param data: 要写入的数据（字典）
         """
-        # 确保目录存在
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         with open(file_path, 'w', encoding='utf-8') as f:

@@ -1,9 +1,6 @@
 import time
-
 import pytest
 import os
-
-from selenium.webdriver.common.by import By
 
 from driver.driver_util import get_driver, quit_driver
 from log.logger import LoggerUtil
@@ -57,7 +54,7 @@ def logged_in_driver(driver_setup):
         if result['status'] != 'success':
             pytest.skip(f"登录失败，跳过后续测试：{result['message']}")
 
-        logger.info("✅ 登录成功，继续执行测试")
+        logger.info("登录成功，继续执行测试")
         return driver
 
     except Exception as e:
@@ -78,7 +75,6 @@ class TestLogin:
         for user in config['login']['users']
     ])
     def test_login_only(self, driver_setup, username, password):
-        """只测试登录功能"""
         logger.info(f"{'=' * 50}")
         logger.info(f"测试登录：{username}")
         logger.info(f"{'=' * 50}")
@@ -156,7 +152,7 @@ class TestConfig:
 
 
         except Exception as e:
-            logger.error(f"❌ 新增测试失败：{str(e)}")
+            logger.error(f"新增测试失败：{str(e)}")
             screenshot_path = ScreenshotUtil.save_screenshot_always(
                 logged_in_driver,
                 SCREENSHOT_DIR,
@@ -167,28 +163,3 @@ class TestConfig:
             raise e
         finally:
             logger.info(f"测试结束\n")
-
-    # def test_edit_config(self, logged_in_driver):
-    #     """测试编辑配置"""
-    #     logger.info("测试编辑配置")
-    #
-    #     config_page = ConfigPage(logged_in_driver)
-    #
-    #     # TODO: 添加你的编辑操作
-    #     # config_page.edit_existing_config()
-    #     config_page.get_goods_type('初始配置')
-    #     config_page.get_goods_type('物资配置')
-    #     config_page.get_goods_type('物资类型')
-    #     config_page.click_button_add()
-    #     logger.info("配置编辑完成")
-
-    # def test_delete_config(self, logged_in_driver):
-    #     """测试删除配置"""
-    #     logger.info("测试删除配置")
-    #
-    #     config_page = ConfigPage(logged_in_driver)
-    #
-    #     # TODO: 添加你的删除操作
-    #     # config_page.delete_config()
-    #
-    #     logger.info("配置删除完成")

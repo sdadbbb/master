@@ -74,30 +74,25 @@ class LoggerUtil:
 
     @staticmethod
     def debug(msg):
-        """输出 DEBUG 级别日志"""
         logger = LoggerUtil.get_logger()
         logger.debug(msg)
 
     @staticmethod
     def info(msg):
-        """输出 INFO 级别日志"""
         logger = LoggerUtil.get_logger()
         logger.info(msg)
 
     @staticmethod
     def warning(msg):
-        """输出 WARNING 级别日志"""
         logger = LoggerUtil.get_logger()
         logger.warning(msg)
 
     @staticmethod
     def error(msg):
-        """输出 ERROR 级别日志"""
         logger = LoggerUtil.get_logger()
         logger.error(msg)
 
     @staticmethod
     def critical(msg):
-        """输出 CRITICAL 级别日志"""
         logger = LoggerUtil.get_logger()
         logger.critical(msg)
