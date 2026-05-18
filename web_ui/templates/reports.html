@@ -104,6 +104,28 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-email {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-email:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(237, 137, 54, 0.4);
+        }
+
         .loading {
             text-align: center;
             padding: 50px;
@@ -162,7 +184,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 测试报告列表</h1>
+            <h1> 测试报告列表</h1>
             <p style="margin-top: 10px;">
                 <a href="/">← 返回首页</a>
             </p>
@@ -170,6 +192,19 @@
 
         <div class="report-list" id="reportList">
             <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <div id="emailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border-radius:10px; width:400px; max-width:90%;">
+            <h3 style="margin-bottom:20px;">📧 发送邮件</h3>
+            <p style="margin-bottom:10px; color:#666;" id="emailReportName"></p>
+            <label style="display:block; margin-bottom:5px; font-weight:bold;">收件人邮箱：</label>
+            <textarea id="emailRecipients" rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; margin-bottom:15px;" placeholder="多个邮箱用逗号分隔，例如：test1@example.com, test2@example.com"></textarea>
+            <div style="text-align:right;">
+                <button onclick="closeEmailModal()" class="btn" style="background:#e0e0e0; color:#333;">取消</button>
+                <button onclick="confirmSendEmail()" class="btn btn-email" style="margin-left:10px;">发送</button>
+            </div>
         </div>
     </div>
 
@@ -218,6 +253,11 @@
                            target="_blank">
                             👁️ 查看报告
                         </a>
+                        <button onclick="openEmailModal('${report.filename}')"
+                                class="btn btn-email"
+                                style="margin-left:10px;">
+                            📧 发送邮件
+                        </button>
                     </div>
                 `;
             });
@@ -259,6 +299,60 @@
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function openEmailModal(filename) {
+            currentEmailReport = filename;
+            document.getElementById('emailReportName').textContent = '报告：' + filename;
+            document.getElementById('emailModal').style.display = 'block';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').style.display = 'none';
+            document.getElementById('emailRecipients').value = '';
+            currentEmailReport = '';
+        }
+
+        function confirmSendEmail() {
+            const recipients = document.getElementById('emailRecipients').value.trim();
+
+            if (!recipients) {
+                alert('请输入收件人邮箱');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '发送中...';
+
+            fetch('/api/send_email_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    filename: currentEmailReport,
+                    recipients: recipients
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = '发送';
+
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    closeEmailModal();
+                } else {
+                    alert(' ' + data.message);
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.textContent = '发送';
+                console.error('发送邮件失败:', error);
+                alert('❌ 发送邮件失败，请稍后重试');
+            });
         }
 
         loadReports(1);

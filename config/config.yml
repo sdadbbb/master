@@ -16,3 +16,11 @@ login:
 driver:
   browser: edge
 
+email:
+  smtp_server: smtp.qq.com
+  smtp_port: 465
+  sender: 2498462852@qq.com
+  password: wqlirmqntrqsdhgh
+  use_ssl: true
+  subject_prefix: "[测试报告]"
+
