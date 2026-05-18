@@ -18,9 +18,9 @@ driver:
 
 email:
   smtp_server: smtp.qq.com
-  smtp_port: 465
-  sender: 2498462852@qq.com
-  password: wqlirmqntrqsdhgh
+  smtp_port: 587
+  sender: 2498462862@qq.com
+  password: svzvankyhmkxdibh
   use_ssl: true
   subject_prefix: "[测试报告]"
 
