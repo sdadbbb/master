@@ -156,7 +156,7 @@ class ApiTester:
         description = test_case.get('description', '')
         request_config = test_case.get('request', {})
         assertions = test_case.get('assert', {})
-        extract_config = test_case.get('extract', {})  # 新增：变量提取配置
+        extract_config = test_case.get('extract', {})
         
         logger.info(f"\n{'='*60}")
         logger.info(f"开始执行接口测试: {name}")
@@ -169,14 +169,14 @@ class ApiTester:
             'error': None,
             'status_code': None,
             'response_time': None,
-            'response_body': None
+            'response_body': None,
+            'response_headers': None,
+            'request_info': None
         }
         
         try:
-            # 替换请求中的变量
             processed_request = self.replace_variables(request_config)
             
-            # 发送请求
             response, elapsed_time = self.request(
                 method=processed_request.get('method', 'GET').upper(),
                 url=processed_request.get('url', ''),
@@ -188,19 +188,29 @@ class ApiTester:
             
             result['status_code'] = response.status_code
             result['response_time'] = f"{elapsed_time:.2f}ms"
-            result['response_body'] = response.text[:1000]  # 只保留前 1000 字符
+            result['response_body'] = response.text
             
-            # 提取变量（如token）
+            try:
+                result['response_json'] = response.json()
+            except:
+                result['response_json'] = None
+            
+            result['response_headers'] = dict(response.headers)
+            result['request_info'] = {
+                'method': processed_request.get('method', 'GET'),
+                'url': processed_request.get('url', ''),
+                'headers': processed_request.get('headers', {}),
+                'data': processed_request.get('data')
+            }
+            
             if extract_config:
                 self.extract_variables(response, extract_config)
             
-            # 断言验证
             if assertions:
                 passed, error_message = self.assert_response(response, elapsed_time, assertions)
                 result['passed'] = passed
                 result['error'] = error_message
             else:
-                # 没有断言，默认只要请求成功就算通过
                 result['passed'] = response.status_code < 400
             
             if result['passed']:
