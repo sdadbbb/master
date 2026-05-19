@@ -495,9 +495,9 @@
                     <div class="form-group">
                         <label>断言规则 (JSON格式)</label>
                         <textarea id="assertConfig" placeholder='{
-  "status_code": 200,
-  "response_time": {"less_than": 1000},
-  "json": {"success": true}
+  "json":{
+    "code":200
+  }
 }'></textarea>
                     </div>
                 </form>
@@ -920,31 +920,19 @@
                                     ${r.error ? `<div style="background: #fff1f0; border: 1px solid #ffccc7; padding: 10px; border-radius: 4px; margin-bottom: 15px; color: #cf1322;"><strong>错误信息:</strong> ${r.error}</div>` : ''}
 
                                     ${r.request_info ? `
-                                        <div style="margin-bottom: 15px;">
+                                        <div style="margin-bottom: 20px;">
                                             <button onclick="toggleDetail('request_${index}')" class="btn btn-secondary btn-small" style="margin-bottom: 10px;">
-                                                📤 查看请求信息
+                                                查看请求信息
                                             </button>
                                             <div id="request_${index}" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 4px; margin-top: 10px;">
                                                 <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${JSON.stringify(r.request_info, null, 2)}</pre>
                                             </div>
                                         </div>
                                     ` : ''}
-
-                                    ${r.response_headers ? `
-                                        <div style="margin-bottom: 15px;">
-                                            <button onclick="toggleDetail('headers_${index}')" class="btn btn-secondary btn-small" style="margin-bottom: 10px;">
-                                                📋 查看响应头
-                                            </button>
-                                            <div id="headers_${index}" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 4px; margin-top: 10px;">
-                                                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${JSON.stringify(r.response_headers, null, 2)}</pre>
-                                            </div>
-                                        </div>
-                                    ` : ''}
-
                                     ${r.response_body ? `
-                                        <div style="margin-bottom: 15px;">
+                                        <div style="margin-bottom: 20px;">
                                             <button onclick="toggleDetail('body_${index}')" class="btn btn-primary btn-small" style="margin-bottom: 10px;">
-                                                📄 查看完整响应体
+                                                查看完整响应体
                                             </button>
                                             <div id="body_${index}" style="display: none; background: white; border: 1px solid #d9d9d9; padding: 15px; border-radius: 4px; margin-top: 10px; max-height: 500px; overflow-y: auto;">
                                                 <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; line-height: 1.6;">${formatResponseBody(r.response_body)}</pre>
@@ -953,9 +941,9 @@
                                     ` : ''}
 
                                     ${r.response_json ? `
-                                        <div style="margin-bottom: 15px;">
+                                        <div style="margin-bottom: 20px;">
                                             <button onclick="toggleDetail('json_${index}')" class="btn btn-success btn-small" style="margin-bottom: 10px;">
-                                                🎯 查看JSON格式
+                                               查看JSON格式
                                             </button>
                                             <div id="json_${index}" style="display: none; background: #f6ffed; border: 1px solid #b7eb8f; padding: 15px; border-radius: 4px; margin-top: 10px; max-height: 500px; overflow-y: auto;">
                                                 <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px; line-height: 1.6;">${JSON.stringify(r.response_json, null, 2)}</pre>

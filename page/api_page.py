@@ -129,13 +129,16 @@ class ApiTester:
             try:
                 response_json = response.json()
                 for key, expected_value in assertions['json'].items():
-                    actual_value = response_json.get(key)
-                    if actual_value != expected_value:
-                        errors.append(f"JSON 断言失败 [{key}]: 期望 {expected_value}, 实际 {actual_value}")
+                    if expected_value == "__exists__":
+                        if key not in response_json:
+                            errors.append(f"JSON 字段存在性断言失败: 字段 '{key}' 不存在于响应中")
+                    else:
+                        actual_value = response_json.get(key)
+                        if actual_value != expected_value:
+                            errors.append(f"JSON 断言失败 [{key}]: 期望 {expected_value}, 实际 {actual_value}")
             except Exception as e:
                 errors.append(f"响应体 JSON 解析失败: {str(e)}")
-        
-        # 4. 断言响应体包含文本
+        # 5. 断言响应体包含文本
         if 'contains' in assertions:
             for text in assertions['contains']:
                 if text not in response.text:
