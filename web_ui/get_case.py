@@ -13,6 +13,13 @@ def index():
     return render_template('index.html')
 
 
+@case_bp.route('/api_tests')
+def api_tests_page():
+    """接口自动化测试页面"""
+    logger.info("访问接口自动化测试页面")
+    return render_template('apitest.html')
+
+
 @case_bp.route('/api/tests')
 def get_tests():
     logger.info("请求获取测试用例列表")
