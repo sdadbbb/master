@@ -1,0 +1,34 @@
+api_tests:
+  - name: "用户登录"
+    description: "验证用户登录接口"
+    request:
+      method: "POST"
+      url: "http://192.168.2.114:94/api/login"
+      headers:
+        Content-Type: "application/json"
+      data:
+        username: "superadmin"
+        password: "admin123"
+    extract:
+      token: "data.token"
+    assert:
+      status_code: 200
+      response_time:
+        less_than: 1000
+      json:
+        success: true
+        message: "登录成功"
+
+  - name: "获取用户信息"
+    description: "验证获取用户信息接口"
+    request:
+      method: "GET"
+      url: "http://192.168.2.114:94/api/user/info"
+      headers:
+        Authorization: "Bearer ${token}"
+    assert:
+      status_code: 200
+      response_time:
+        less_than: 500
+      json:
+        success: true
