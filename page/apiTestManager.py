@@ -43,6 +43,30 @@ class ApiTestManager:
                 return test
         return None
 
+    def search_tests(self, keyword):
+        """根据关键词模糊搜索测试用例
+        
+        Args:
+            keyword (str): 搜索关键词，支持模糊匹配
+            
+        Returns:
+            list: 匹配到的测试用例列表
+        """
+        if not keyword:
+            return []
+        
+        tests = self._load_tests()
+        keyword_lower = keyword.lower()
+        
+        # 支持按名称和描述进行模糊搜索
+        matched_tests = [
+            test for test in tests 
+            if keyword_lower in test.get('name', '').lower() or 
+               keyword_lower in test.get('description', '').lower()
+        ]
+        
+        return matched_tests
+
     def add_test(self, test_data):
         """添加测试用例"""
         tests = self._load_tests()

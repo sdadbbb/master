@@ -238,3 +238,29 @@ def delete_test_result(task_id):
     except Exception as e:
         logger.error(f"删除测试结果失败: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@api_bp.route('/api_tests/search', methods=['GET'])
+def search_api_tests():
+    """模糊搜索接口测试用例"""
+    try:
+        keyword = request.args.get('keyword', '').strip()
+        
+        if not keyword:
+            return jsonify({
+                'success': True,
+                'data': [],
+                'total': 0,
+                'message': '搜索关键词不能为空'
+            })
+        
+        tests = test_manager.search_tests(keyword)
+        
+        return jsonify({
+            'success': True,
+            'data': tests,
+            'total': len(tests)
+        })
+    except Exception as e:
+        logger.error(f"搜索接口测试用例失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
