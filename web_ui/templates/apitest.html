@@ -530,6 +530,9 @@
         let currentTests = [];
         let selectedTests = new Set();
         let searchTimeout = null;
+        let currentPage = 1;
+        let resultsCurrentPage = 1;
+        const perPage = 10;
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -552,6 +555,7 @@
                 
                 if (data.success) {
                     currentTests = data.data;
+                    currentPage = 1;
                     renderTests(currentTests);
                 }
             } catch (error) {
@@ -575,7 +579,12 @@
                 return;
             }
             
-            tbody.innerHTML = tests.map(test => {
+            const totalPages = Math.ceil(tests.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pageTests = tests.slice(start, end);
+
+            tbody.innerHTML = pageTests.map(test => {
                 const method = test.request?.method || 'GET';
                 const url = test.request?.url || '';
                 return `
@@ -600,6 +609,27 @@
                     </tr>
                 `;
             }).join('');
+
+            if (totalPages > 1) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px;">
+                            <div style="display: inline-flex; gap: 5px; align-items: center;">
+                                <button class="btn btn-secondary btn-small" onclick="changeTestPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>
+                                <button class="btn btn-secondary btn-small" onclick="changeTestPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>
+                                <span style="padding: 0 10px;">第 ${currentPage} / ${totalPages} 页，共 ${tests.length} 条</span>
+                                <button class="btn btn-secondary btn-small" onclick="changeTestPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>
+                                <button class="btn btn-secondary btn-small" onclick="changeTestPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function changeTestPage(page) {
+            currentPage = page;
+            renderTests(currentTests);
         }
         
         function debounceSearch() {
@@ -633,7 +663,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        renderTests(data.data);
+                        currentTests = data.data;
+                        currentPage = 1;
+                        renderTests(currentTests);
                     } else {
                         console.error('搜索失败:', data.message);
                         alert('搜索失败: ' + data.message);
@@ -832,7 +864,12 @@
         }
         
         async function runBatchTests() {
-            if (!confirm('确定要执行所有测试用例吗？')) {
+            if (selectedTests.size === 0) {
+                alert('请先选择要执行的测试用例');
+                return;
+            }
+
+            if (!confirm(`确定要执行选中的 ${selectedTests.size} 个测试用例吗？`)) {
                 return;
             }
             
@@ -840,7 +877,7 @@
                 const response = await fetch('/api/run_batch_tests', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({})
+                    body: JSON.stringify({test_ids: Array.from(selectedTests)})
                 });
                 
                 const data = await response.json();
@@ -848,6 +885,8 @@
                 if (data.success) {
                     const summary = data.data.summary;
                     alert(`执行完成！\n总计: ${summary.total}\n通过: ${summary.passed}\n失败: ${summary.failed}`);
+                    selectedTests.clear();
+                    document.getElementById('selectAll').checked = false;
                     loadResults();
                 } else {
                     alert(data.message || '执行失败');
@@ -857,14 +896,14 @@
                 alert('执行失败');
             }
         }
-        
+
         async function loadResults() {
             try {
-                const response = await fetch('/api/test_results?page=1&per_page=20');
+                const response = await fetch(`/api/test_results?page=${resultsCurrentPage}&per_page=${perPage}`);
                 const data = await response.json();
                 
                 if (data.success) {
-                    renderResults(data.data);
+                    renderResults(data.data, data.pagination);
                     updateStats(data.data);
                 }
             } catch (error) {
@@ -872,7 +911,7 @@
             }
         }
         
-        function renderResults(results) {
+        function renderResults(results, pagination) {
             const tbody = document.getElementById('resultsTableBody');
             
             if (results.length === 0) {
@@ -880,21 +919,52 @@
                 return;
             }
             
-            tbody.innerHTML = results.map(result => `
-                <tr>
-                    <td>${result.task_id}</td>
-                    <td>${result.total}</td>
-                    <td><span class="status-badge status-passed">${result.passed}</span></td>
-                    <td><span class="status-badge status-failed">${result.failed}</span></td>
-                    <td>${result.executed_at}</td>
-                    <td>
-                        <div class="action-btns">
-                            <button class="btn btn-secondary btn-small" onclick="viewResult('${result.task_id}')">查看</button>
-                            <button class="btn btn-danger btn-small" onclick="deleteResult('${result.task_id}')">删除</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = results.map(result => {
+                const testNamesStr = result.test_names && result.test_names.length > 0
+                    ? result.test_names.join('、')
+                    : '-';
+                return `
+                    <tr>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;" title="${result.task_id}">${result.task_id}</td>
+                        <td>${result.total}</td>
+                        <td><span class="status-badge status-passed">${result.passed}</span></td>
+                        <td><span class="status-badge status-failed">${result.failed}</span></td>
+                        <td>${result.executed_at}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-secondary btn-small" onclick="viewResult('${result.task_id}')">查看</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteResult('${result.task_id}')">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td colspan="6" style="font-size: 12px; color: #666; padding: 8px 12px;">
+                            <strong>执行用例:</strong> ${testNamesStr}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (pagination && pagination.total_pages > 1) {
+                tbody.innerHTML += `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">
+                            <div style="display: inline-flex; gap: 5px; align-items: center;">
+                                <button class="btn btn-secondary btn-small" onclick="changeResultsPage(1)" ${!pagination.has_prev ? 'disabled' : ''}>首页</button>
+                                <button class="btn btn-secondary btn-small" onclick="changeResultsPage(${pagination.page - 1})" ${!pagination.has_prev ? 'disabled' : ''}>上一页</button>
+                                <span style="padding: 0 10px;">第 ${pagination.page} / ${pagination.total_pages} 页，共 ${pagination.total} 条</span>
+                                <button class="btn btn-secondary btn-small" onclick="changeResultsPage(${pagination.page + 1})" ${!pagination.has_next ? 'disabled' : ''}>下一页</button>
+                                <button class="btn btn-secondary btn-small" onclick="changeResultsPage(${pagination.total_pages})" ${!pagination.has_next ? 'disabled' : ''}>末页</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function changeResultsPage(page) {
+            resultsCurrentPage = page;
+            loadResults();
         }
         
         function updateStats(results) {

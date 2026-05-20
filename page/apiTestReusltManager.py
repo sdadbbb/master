@@ -11,7 +11,7 @@ class ApiTestResultManager:
         self.results_dir = os.path.join(FileUtil.get_project_root(), 'reports', 'api_results')
         os.makedirs(self.results_dir, exist_ok=True)
 
-    def save_result(self, task_id, results):
+    def save_result(self, task_id, results, test_names=None):
         """保存测试结果"""
         result_file = os.path.join(self.results_dir, f"{task_id}.json")
 
@@ -21,6 +21,7 @@ class ApiTestResultManager:
             'passed': sum(1 for r in results if r['passed']),
             'failed': sum(1 for r in results if not r['passed']),
             'executed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'test_names': test_names or [],
             'results': results
         }
 
@@ -58,7 +59,8 @@ class ApiTestResultManager:
                             'total': data.get('total', 0),
                             'passed': data.get('passed', 0),
                             'failed': data.get('failed', 0),
-                            'executed_at': data.get('executed_at')
+                            'executed_at': data.get('executed_at'),
+                            'test_names': data.get('test_names', [])
                         })
                 except Exception:
                     continue

@@ -146,14 +146,15 @@ def run_batch_tests():
         test_ids = data.get('test_ids', [])
 
         if not test_ids:
-            all_tests = test_manager.get_all_tests()
-            test_ids = [test['id'] for test in all_tests]
+            return jsonify({'success': False, 'message': '请选择要执行的测试用例'}), 400
 
         tests = []
+        test_names = []
         for test_id in test_ids:
             test = test_manager.get_test_by_id(test_id)
             if test:
                 tests.append(test)
+                test_names.append(test.get('name', test_id))
 
         if not tests:
             return jsonify({'success': False, 'message': '没有找到有效的测试用例'}), 404
@@ -164,7 +165,7 @@ def run_batch_tests():
         try:
             results = tester.run_api_tests(tests)
 
-            summary = result_manager.save_result(task_id, results)
+            summary = result_manager.save_result(task_id, results, test_names)
 
             passed_count = summary['passed']
             failed_count = summary['failed']

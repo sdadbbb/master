@@ -35,13 +35,13 @@ class ApiTester:
                 method=method,
                 url=full_url,
                 headers=headers or {},
-                data=data,
+                data=data if json_data is None else None,
                 params=params,
                 json=json_data,
                 timeout=30
             )
             
-            elapsed_time = (time.time() - start_time) * 1000  # 毫秒
+            elapsed_time = (time.time() - start_time) * 1000
             
             logger.info(f" 收到响应: {response.status_code} (耗时: {elapsed_time:.2f}ms)")
             logger.debug(f"响应内容: {response.text[:500]}")
@@ -184,7 +184,6 @@ class ApiTester:
                 method=processed_request.get('method', 'GET').upper(),
                 url=processed_request.get('url', ''),
                 headers=processed_request.get('headers', {}),
-                data=processed_request.get('data'),
                 params=processed_request.get('params'),
                 json_data=processed_request.get('data')
             )
