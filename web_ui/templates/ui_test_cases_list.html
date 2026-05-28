@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI自动化测试用例</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #73d13d;
+        }
+        
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        
+        .toolbar {
+            padding: 20px 30px;
+            background: #fafafa;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            padding: 0 30px 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 UI自动化测试用例</h1>
+            <div>
+                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">🏠 返回主页</button>
+                <button class="btn btn-primary" onclick="createNewCase()">➕ 新建用例</button>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <div>共 <strong id="totalCount">0</strong> 个用例</div>
+            <button class="btn btn-danger" onclick="batchDelete()" id="batchDeleteBtn" style="display:none;">🗑️ 批量删除</button>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                        <th>用例名称</th>
+                        <th>描述</th>
+                        <th>步骤数</th>
+                        <th>创建时间</th>
+                        <th>更新时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="casesTableBody">
+                    <tr>
+                        <td colspan="7" style="text-align:center;padding:40px;">加载中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let cases = [];
+        let selectedCases = new Set();
+
+        function loadCases() {
+            fetch('/api/ui_test_cases')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        cases = data.data;
+                        renderTable();
+                    }
+                });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('casesTableBody');
+            document.getElementById('totalCount').textContent = cases.length;
+            
+            if (cases.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <p>暂无测试用例，点击右上角"新建用例"开始创建</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            cases.forEach(caseItem => {
+                html += `
+                    <tr>
+                        <td><input type="checkbox" value="${caseItem.id}" onchange="toggleSelect('${caseItem.id}')"></td>
+                        <td><strong>${caseItem.name}</strong></td>
+                        <td>${caseItem.description || '-'}</td>
+                        <td>${caseItem.steps.length} 步</td>
+                        <td>${caseItem.created_at}</td>
+                        <td>${caseItem.updated_at}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn btn-success btn-small" onclick="editCase('${caseItem.id}')">✏️ 编辑</button>
+                                <button class="btn btn-primary btn-small" onclick="executeCase('${caseItem.id}')">▶️ 执行</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteCase('${caseItem.id}')">🗑️ 删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        function createNewCase() {
+            window.location.href = '/api/ui_test_editor';
+        }
+
+        function editCase(caseId) {
+            window.location.href = `/api/ui_test_editor?case_id=${caseId}`;
+        }
+
+        function executeCase(caseId) {
+            if (confirm('确定要执行这个测试用例吗？')) {
+                // 创建一个状态显示区域
+                const row = event.target.closest('tr');
+                let statusCell = row.querySelector('.exec-status');
+                if (!statusCell) {
+                    statusCell = document.createElement('td');
+                    statusCell.className = 'exec-status';
+                    statusCell.colSpan = 7;
+                    statusCell.style.background = '#f0f9ff';
+                    row.parentNode.insertBefore(statusCell, row.nextSibling);
+                }
+                statusCell.innerHTML = '<span style="color: #1890ff;">⏳ 任务已下发，等待本地代理领取...</span>';
+
+                fetch('/api/run_ui_test_case', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ case_id: caseId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        pollUiStatus(data.task_id, statusCell);
+                    } else {
+                        statusCell.innerHTML = `<span style="color: #ff4d4f;">❌ 下发失败: ${data.message}</span>`;
+                    }
+                });
+            }
+        }
+
+        function pollUiStatus(taskId, statusCell) {
+            const interval = setInterval(() => {
+                fetch(`/api/status/${taskId}`)
+                    .then(res => res.json())
+                    .then(statusData => {
+                        if (!statusData.success) return;
+                        const task = statusData.data;
+
+                        if (task.status === 'waiting_local') {
+                            statusCell.innerHTML = '<span style="color: #faad14;">⏳ 等待本地代理领取任务...</span>';
+                        } else if (task.status === 'executing') {
+                            statusCell.innerHTML = '<span style="color: #1890ff;">💻 本地正在执行中...</span>';
+                        } else if (task.status === 'completed') {
+                            clearInterval(interval);
+                            const color = task.success ? '#52c41a' : '#ff4d4f';
+                            const icon = task.success ? '✅' : '❌';
+                            statusCell.innerHTML = `<span style="color: ${color};">${icon} 执行完成: ${task.output || ''}</span>`;
+                            setTimeout(() => statusCell.remove(), 5000);
+                        } else if (task.status === 'error') {
+                            clearInterval(interval);
+                            statusCell.innerHTML = `<span style="color: #ff4d4f;">❌ 执行异常: ${task.output}</span>`;
+                        }
+                    });
+            }, 2000);
+        }
+
+        function deleteCase(caseId) {
+            if (confirm('确定要删除这个用例吗？')) {
+                fetch(`/api/ui_test_cases/${caseId}`, {
+                    method: 'DELETE'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('删除成功');
+                        loadCases();
+                    } else {
+                        alert('删除失败: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('#casesTableBody input[type="checkbox"]');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedCases.add(cb.value);
+                } else {
+                    selectedCases.delete(cb.value);
+                }
+            });
+            
+            updateBatchDeleteButton();
+        }
+
+        function toggleSelect(caseId) {
+            if (selectedCases.has(caseId)) {
+                selectedCases.delete(caseId);
+            } else {
+                selectedCases.add(caseId);
+            }
+            updateBatchDeleteButton();
+        }
+
+        function updateBatchDeleteButton() {
+            const btn = document.getElementById('batchDeleteBtn');
+            if (selectedCases.size > 0) {
+                btn.style.display = 'block';
+                btn.textContent = `🗑️ 批量删除 (${selectedCases.size})`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function batchDelete() {
+            if (selectedCases.size === 0) return;
+            
+            if (confirm(`确定要删除选中的 ${selectedCases.size} 个用例吗？`)) {
+                fetch('/api/ui_test_cases/batch_delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ case_ids: Array.from(selectedCases) })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        selectedCases.clear();
+                        document.getElementById('selectAll').checked = false;
+                        loadCases();
+                    } else {
+                        alert('删除失败: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        loadCases();
+    </script>
+</body>
+</html>

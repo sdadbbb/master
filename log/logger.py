@@ -73,6 +73,25 @@ class LoggerUtil:
         return logger
 
     @staticmethod
+    def critical(msg):
+        logger = LoggerUtil.get_logger()
+        logger.critical(msg)
+
+    @staticmethod
+    def reset_logger():
+        """
+        重置日志器，关闭所有处理器并释放文件句柄
+        用于清理临时目录前调用
+        """
+        if LoggerUtil._logger is not None:
+            logger = LoggerUtil._logger
+            for handler in logger.handlers[:]:
+                handler.flush()
+                handler.close()
+                logger.removeHandler(handler)
+            LoggerUtil._logger = None
+
+    @staticmethod
     def debug(msg):
         logger = LoggerUtil.get_logger()
         logger.debug(msg)

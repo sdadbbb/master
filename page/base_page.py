@@ -67,6 +67,19 @@ class base_page:
         element.clear()
         element.send_keys(text)
 
+    def input_by_placeholder_only(self, placeholder, text, timeout=10):
+        """
+        仅根据 placeholder 查找输入框并输入（
+        :param placeholder: 输入框提示词
+        :param text: 想输入的文本
+        :param timeout: 等待时间
+        """
+        locator = (By.XPATH, f'//input[@placeholder="{placeholder}"]')
+        element = self.wait_element(locator, timeout)
+        element.clear()
+        element.send_keys(text)
+        logger.info(f"提示内容 '{placeholder}' 输入: {text}")
+
     def get_element_text(self, locator, timeout=10):
         element = self.wait_element(locator, timeout)
         return element.text
@@ -78,7 +91,7 @@ class base_page:
         :param button_text: 按钮上显示的文本
         :param timeout: 等待超时时间（秒）
         """
-        if aria_label is not None:
+        if aria_label and aria_label.strip():
             locators = [
                     (By.XPATH, f"//div[contains(@class,'el-dialog__wrapper') and not(contains(@style,'display: none'))]//div[@aria-label='{aria_label}']//span[normalize-space()='{button_text}']")
             ]
@@ -93,6 +106,9 @@ class base_page:
                 (By.XPATH, f"//a[text()='{button_text}']"),
                 # 任何包含按钮文本的元素（通用）
                 (By.XPATH, f"//*[text()='{button_text}' and contains(@class, 'btn')]"),
+                # button 内部包含 span/div，span/div 的文本匹配
+                (By.XPATH, f"//button[.//span[contains(text(), '{button_text}')]]"),
+                (By.XPATH, f"//button[.//div[contains(text(), '{button_text}')]]"),
             ]
         # 依次尝试每个定位器
         for locator in locators:
@@ -125,26 +141,19 @@ class base_page:
     def click_contains_text(self, text, tag_name='*', timeout=10):
         """
         点击包含指定文本的元素（更灵活的方法）
-        :param text: 要匹配的文本
-        :param tag_name: HTML 标签名，默认为 '*'（任意标签）
-        :param timeout: 等待超时时间（秒）
         """
         locator = (By.XPATH, f"//{tag_name}[contains(text(), '{text}')]")
         element = self.wait_element(locator, timeout)
         element.click()
-        logger.info(f"✅ 已点击包含文本 '{text}' 的 {tag_name} 元素")
+        logger.info(f"已点击包含文本 '{text}' 的 {tag_name} 元素")
 
     def find_element_by_text(self, text, tag_name='*', timeout=10):
         """
         根据文本内容查找元素
-        :param text: 要查找的文本
-        :param tag_name: HTML 标签名，默认为 '*'（任意标签）
-        :param timeout: 等待超时时间（秒）
-        :return: 找到的元素
         """
         locator = (By.XPATH, f"//{tag_name}[text()='{text}']")
         element = self.wait_element(locator, timeout)
-        logger.info(f"✅ 找到包含文本 '{text}' 的 {tag_name} 元素")
+        logger.info(f" 找到包含文本 '{text}' 的 {tag_name} 元素")
         return element
 
     def find_contains_text_element(self, text, tag_name='*', timeout=10):

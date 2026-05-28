@@ -1,9 +1,45 @@
 import os
+import zipfile
 
 from flask import Blueprint, jsonify, request, send_file
 from web_ui.conf import logger, REPORT_DIR, running_tasks
 
 task_bp = Blueprint('task', __name__)
+
+
+def create_project_zip(task_id):
+    """
+    打包项目核心代码为 ZIP 文件
+    :param task_id: 任务 ID，用于命名 ZIP 文件
+    :return: ZIP 文件的完整路径
+    """
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    temp_dir = os.path.join(project_root, 'temp_zips')
+    os.makedirs(temp_dir, exist_ok=True)
+
+    zip_path = os.path.join(temp_dir, f"{task_id}.zip")
+    exclude_dirs = {'__pycache__', '.idea', '.pytest_cache', 'reports', 'temp_tests', 'dist', 'build', 'temp_zips'}
+    exclude_subdirs = {os.path.join('log', 'logger')}
+
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for root, dirs, files in os.walk(project_root):
+            dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
+            current_relative_path = os.path.relpath(root, project_root)
+            if current_relative_path in exclude_subdirs or any(
+                    current_relative_path.startswith(excl + os.sep) for excl in exclude_subdirs):
+                dirs.clear()
+                continue
+
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, project_root)
+
+                if file.endswith(('.py', '.yml', '.yaml', '.json')) or file == 'requirements.txt':
+                    zip_file.write(file_path, arcname)
+
+    logger.info(f"项目包已保存: {zip_path}")
+    return zip_path
 
 
 @task_bp.route('/api/poll_task')
@@ -27,7 +63,7 @@ def poll_task():
             'data': {
                 'task_id': pending_task_id,
                 'test_name': pending_task.get('test_name'),
-                # 动态生成下载 URL
+                'type': pending_task.get('type', 'pytest'),  # 新增：返回任务类型
                 'download_url': f"{server_host}/api/get_task_zip/{pending_task_id}"
             }
         })

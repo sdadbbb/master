@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI自动化测试 - 流水线编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #73d13d;
+        }
+        
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .main-content {
+            display: flex;
+            height: calc(100vh - 180px);
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #fafafa;
+            border-right: 1px solid #e8e8e8;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .action-category {
+            margin-bottom: 20px;
+        }
+        
+        .action-category-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .action-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 2px solid #e8e8e8;
+            border-radius: 6px;
+            cursor: move;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .action-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .action-icon {
+            font-size: 20px;
+        }
+        
+        .action-info {
+            flex: 1;
+        }
+        
+        .action-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .action-desc {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+        
+        .pipeline-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f5f7fa;
+        }
+        
+        .case-info {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .case-info h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .pipeline-container {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .pipeline-line {
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+        
+        .step-node {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 80px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .step-dot {
+            position: absolute;
+            left: 28px;
+            top: 20px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #667eea;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 12px;
+        }
+        
+        .step-card {
+            background: white;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+            cursor: move;
+        }
+        
+        .step-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .step-card.dragging {
+            opacity: 0.5;
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .step-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .step-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .step-action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .btn-edit {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .btn-edit:hover {
+            background: #bae7ff;
+        }
+        
+        .btn-delete {
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+        
+        .btn-delete:hover {
+            background: #ffccc7;
+        }
+        
+        .step-params {
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .param-item {
+            margin-bottom: 5px;
+        }
+        
+        .param-key {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .param-form-group {
+            margin-bottom: 15px;
+        }
+        
+        .param-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .param-form-group input,
+        .param-form-group select,
+        .param-form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .param-form-group input:focus,
+        .param-form-group select:focus,
+        .param-form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .required-mark {
+            color: #ff4d4f;
+            margin-left: 4px;
+        }
+        
+        .execution-result {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .status-passed {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        
+        .status-failed {
+            background: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        
+        .step-result {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #d9d9d9;
+        }
+        
+        .step-result.passed {
+            background: #f6ffed;
+            border-left-color: #52c41a;
+        }
+        
+        .step-result.failed {
+            background: #fff2f0;
+            border-left-color: #ff4d4f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 UI自动化测试 - 流水线编辑器</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">🏠 返回主页</button>
+                <button class="btn btn-primary" onclick="saveCase()">💾 保存用例</button>
+                <button class="btn btn-success" onclick="executeCase()">▶️ 执行测试</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>🛠️ 可用操作</h3>
+                <div id="actionsList"></div>
+            </div>
+            
+            <div class="pipeline-area">
+                <div class="case-info">
+                    <h3>📝 用例信息</h3>
+                    <div class="form-group">
+                        <label>用例名称 <span style="color: #ff4d4f">*</span></label>
+                        <input type="text" id="caseName" placeholder="请输入用例名称">
+                    </div>
+                    <div class="form-group">
+                        <label>用例描述</label>
+                        <textarea id="caseDescription" rows="2" placeholder="请输入用例描述"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>起始URL</label>
+                        <input type="text" id="caseUrl" placeholder="https://example.com">
+                    </div>
+                </div>
+                
+                <div class="pipeline-container">
+                    <div class="pipeline-line"></div>
+                    <div id="pipelineSteps"></div>
+                </div>
+                
+                <div id="executionResult"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="paramModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">配置参数</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmAddStep()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCaseId = null;
+        let steps = [];
+        let availableActions = [];
+        let editingStepIndex = null;
+        let selectedAction = null;
+
+        // 加载可用操作
+        function loadAvailableActions() {
+            fetch('/api/available_actions')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        availableActions = data.data;
+                        renderActionsList();
+                    }
+                });
+        }
+
+        // 渲染操作列表
+        function renderActionsList() {
+            const container = document.getElementById('actionsList');
+            const categories = {};
+            
+            availableActions.forEach(action => {
+                const category = action.category || '其他';
+                if (!categories[category]) {
+                    categories[category] = [];
+                }
+                categories[category].push(action);
+            });
+            
+            let html = '';
+            for (const [category, actions] of Object.entries(categories)) {
+                html += `<div class="action-category">`;
+                html += `<div class="action-category-title">${category}</div>`;
+                actions.forEach(action => {
+                    html += `
+                        <div class="action-item" draggable="true" ondragstart="handleDragStart(event, '${action.action}')">
+                            <div class="action-icon">${action.icon}</div>
+                            <div class="action-info">
+                                <div class="action-name">${action.name}</div>
+                                <div class="action-desc">${action.description}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // 拖拽开始
+        function handleDragStart(event, actionName) {
+            event.dataTransfer.setData('action', actionName);
+        }
+
+        // 初始化拖放区域
+        function initDropZone() {
+            const pipelineArea = document.querySelector('.pipeline-area');
+            
+            pipelineArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            pipelineArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const actionName = e.dataTransfer.getData('action');
+                if (actionName) {
+                    openParamModal(actionName);
+                }
+            });
+        }
+
+        // 打开参数配置弹窗
+        function openParamModal(actionName, stepIndex = null) {
+            selectedAction = availableActions.find(a => a.action === actionName);
+            editingStepIndex = stepIndex;
+            
+            document.getElementById('modalTitle').textContent = 
+                stepIndex !== null ? '编辑步骤' : selectedAction.name;
+            
+            let html = '';
+            selectedAction.params.forEach(param => {
+                const required = param.required ? '<span class="required-mark">*</span>' : '';
+                
+                if (param.type === 'select') {
+                    html += `<div class="param-form-group">`;
+                    html += `<label>${param.label}${required}</label>`;
+                    html += `<select id="param_${param.key}">`;
+                    param.options.forEach(opt => {
+                        const selected = opt === param.default ? 'selected' : '';
+                        html += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    html += `</select></div>`;
+                } else if (param.type === 'array') {
+                    html += `<div class="param-form-group">`;
+                    html += `<label>${param.label}${required}</label>`;
+                    html += `<textarea id="param_${param.key}" rows="3" placeholder="${param.placeholder || '用逗号分隔多个值'}"></textarea>`;
+                    html += `</div>`;
+                } else {
+                    const inputType = param.type === 'number' ? 'number' : 'text';
+                    const defaultValue = param.default || '';
+                    html += `<div class="param-form-group">`;
+                    html += `<label>${param.label}${required}</label>`;
+                    html += `<input type="${inputType}" id="param_${param.key}" 
+                             placeholder="${param.placeholder || ''}" 
+                             value="${defaultValue}">`;
+                    html += `</div>`;
+                }
+            });
+            
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('paramModal').classList.add('active');
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('paramModal').classList.remove('active');
+            editingStepIndex = null;
+            selectedAction = null;
+        }
+
+        // 确认添加/编辑步骤
+        function confirmAddStep() {
+            const params = {};
+            let hasError = false;
+            
+            selectedAction.params.forEach(param => {
+                const element = document.getElementById(`param_${param.key}`);
+                let value = element.value.trim();
+                
+                if (param.required && !value) {
+                    hasError = true;
+                    element.style.borderColor = '#ff4d4f';
+                    return;
+                }
+                
+                if (param.type === 'number' && value) {
+                    value = parseFloat(value);
+                } else if (param.type === 'array' && value) {
+                    value = value.split(',').map(s => s.trim());
+                }
+                
+                params[param.key] = value;
+            });
+            
+            if (hasError) {
+                alert('请填写必填字段');
+                return;
+            }
+            
+            const step = {
+                action: selectedAction.action,
+                params: params
+            };
+            
+            if (editingStepIndex !== null) {
+                steps[editingStepIndex] = step;
+            } else {
+                steps.push(step);
+            }
+            
+            renderPipeline();
+            closeModal();
+        }
+
+        // 渲染流水线
+        function renderPipeline() {
+            const container = document.getElementById('pipelineSteps');
+            
+            if (steps.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>从左侧拖拽操作到此处，构建你的测试流程</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            steps.forEach((step, index) => {
+                const action = availableActions.find(a => a.action === step.action);
+                html += `
+                    <div class="step-node" draggable="true" ondragstart="handleStepDragStart(event, ${index})" 
+                         ondragover="handleStepDragOver(event)" ondrop="handleStepDrop(event, ${index})">
+                        <div class="step-dot">${index + 1}</div>
+                        <div class="step-card">
+                            <div class="step-header">
+                                <div class="step-title">
+                                    <span>${action.icon}</span>
+                                    <span>${action.name}</span>
+                                </div>
+                                <div class="step-actions">
+                                    <button class="step-action-btn btn-edit" onclick="editStep(${index})">✏️ 编辑</button>
+                                    <button class="step-action-btn btn-delete" onclick="deleteStep(${index})">🗑️ 删除</button>
+                                </div>
+                            </div>
+                            <div class="step-params">
+                                ${renderStepParams(step.params)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // 渲染步骤参数
+        function renderStepParams(params) {
+            let html = '';
+            for (const [key, value] of Object.entries(params)) {
+                const displayValue = Array.isArray(value) ? value.join(', ') : value;
+                html += `<div class="param-item"><span class="param-key">${key}:</span> ${displayValue}</div>`;
+            }
+            return html || '<div style="color: #999;">无参数</div>';
+        }
+
+        // 编辑步骤
+        function editStep(index) {
+            const step = steps[index];
+            openParamModal(step.action, index);
+        }
+
+        // 删除步骤
+        function deleteStep(index) {
+            if (confirm('确定要删除这个步骤吗？')) {
+                steps.splice(index, 1);
+                renderPipeline();
+            }
+        }
+
+        // 步骤拖拽排序
+        let draggedStepIndex = null;
+
+        function handleStepDragStart(event, index) {
+            draggedStepIndex = index;
+            event.target.classList.add('dragging');
+        }
+
+        function handleStepDragOver(event) {
+            event.preventDefault();
+        }
+
+        function handleStepDrop(event, dropIndex) {
+            event.preventDefault();
+            if (draggedStepIndex === null || draggedStepIndex === dropIndex) return;
+            
+            const draggedStep = steps[draggedStepIndex];
+            steps.splice(draggedStepIndex, 1);
+            steps.splice(dropIndex, 0, draggedStep);
+            
+            renderPipeline();
+            draggedStepIndex = null;
+        }
+
+        // 保存用例
+        function saveCase() {
+            const name = document.getElementById('caseName').value.trim();
+            const description = document.getElementById('caseDescription').value.trim();
+            const url = document.getElementById('caseUrl').value.trim();
+            
+            if (!name) {
+                alert('请输入用例名称');
+                return;
+            }
+            
+            if (steps.length === 0) {
+                alert('请至少添加一个步骤');
+                return;
+            }
+            
+            const caseData = {
+                name,
+                description,
+                url,
+                steps
+            };
+            
+            const method = currentCaseId ? 'PUT' : 'POST';
+            const url_path = currentCaseId ? `/api/ui_test_cases/${currentCaseId}` : '/api/ui_test_cases';
+            
+            fetch(url_path, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(caseData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('保存成功！');
+                    if (!currentCaseId) {
+                        currentCaseId = data.data.id;
+                    }
+                    window.location.href = '/api/ui_test_cases_list';
+                } else {
+                    alert('保存失败: ' + data.message);
+                }
+            });
+        }
+
+        // 执行测试
+        function executeCase() {
+            if (!currentCaseId) {
+                alert('请先保存用例');
+                return;
+            }
+            
+            if (confirm('确定要执行这个测试用例吗？')) {
+                document.getElementById('executionResult').innerHTML = '<p style="text-align:center;padding:20px;">⏳ 执行中...</p>';
+                
+                fetch('/api/run_ui_test_case', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ case_id: currentCaseId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderExecutionResult(data.data.result);
+                    } else {
+                        alert('执行失败: ' + data.message);
+                    }
+                });
+            }
+        }
+
+        // 渲染执行结果
+        function renderExecutionResult(result) {
+            const container = document.getElementById('executionResult');
+            const statusClass = result.passed ? 'status-passed' : 'status-failed';
+            const statusText = result.passed ? '✅ 测试通过' : '❌ 测试失败';
+            
+            let html = `
+                <div class="execution-result">
+                    <div class="result-header">
+                        <h3>📊 执行结果</h3>
+                        <span class="result-status ${statusClass}">${statusText}</span>
+                    </div>
+            `;
+            
+            if (result.error) {
+                html += `<div style="color: #ff4d4f; margin-bottom: 15px;">错误: ${result.error}</div>`;
+            }
+            
+            html += '<div>';
+            result.steps_results.forEach(stepResult => {
+                const stepClass = stepResult.passed ? 'passed' : 'failed';
+                const icon = stepResult.passed ? '✅' : '❌';
+                html += `
+                    <div class="step-result ${stepClass}">
+                        <strong>${icon} 步骤 ${stepResult.step_index}: ${stepResult.action_name}</strong>
+                        <div style="margin-top: 5px; font-size: 13px;">${stepResult.message}</div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+            
+            container.innerHTML = html;
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            loadAvailableActions();
+            initDropZone();
+            renderPipeline();
+        };
+    </script>
+</body>
+</html>

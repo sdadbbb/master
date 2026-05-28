@@ -185,6 +185,38 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(237, 137, 54, 0.4);
         }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff7875;
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .test-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -195,13 +227,18 @@
         </div>
 
         <div class="test-list" id="testList">
-            <h2 style="margin-bottom: 20px; color: #333;">📋 测试用例列表</h2>
+            <div class="section-title">
+                <span>📋 Pytest测试用例</span>
+                <span class="section-badge" id="pytestCount">0 个</span>
+            </div>
             <p style="color: #666;">加载中...</p>
         </div>
 
         <div style="margin-top: 30px;">
             <div class="test-list">
-                <h2 style="margin-bottom: 20px; color: #333;">📊 最新测试报告</h2>
+                <div class="section-title">
+                    <span>📊 最新测试报告</span>
+                </div>
                 <div id="latestReports">
                     <p style="color: #666;">加载中...</p>
                 </div>
@@ -210,7 +247,9 @@
 
         <div style="margin-top: 30px;">
             <div class="test-list">
-                <h2 style="margin-bottom: 20px; color: #333;">📸 快速链接</h2>
+                <div class="section-title">
+                    <span>🚀 快速链接</span>
+                </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <a href="/reports" class="btn btn-primary" style="padding: 12px 25px; text-decoration: none;">
                         📊 查看所有报告
@@ -220,6 +259,9 @@
                     </a>
                     <a href="/api_tests" class="btn btn-info" style="padding: 12px 25px; text-decoration: none;">
                         🔌 接口自动化测试
+                    </a>
+                    <a href="/api/ui_test_cases_list" class="btn btn-primary" style="padding: 12px 25px; text-decoration: none; background: #764ba2;">
+                        🎨 UI流水线测试
                     </a>
                 </div>
             </div>
@@ -248,7 +290,8 @@
             fetch('/api/tests')
                 .then(res => res.json())
                 .then(data => {
-                    tests = data.data;
+                    tests = data.data || [];
+                    document.getElementById('pytestCount').textContent = tests.length + ' 个';
                     renderTestList();
                 })
                 .catch(error => {
@@ -276,7 +319,12 @@
         // 渲染测试列表
         function renderTestList() {
             const container = document.getElementById('testList');
-            let html = '<h2 style="margin-bottom: 20px; color: #333;">📋 测试用例列表</h2>';
+            let html = `
+                <div class="section-title">
+                    <span>📋 Pytest测试用例</span>
+                    <span class="section-badge">${tests.length} 个</span>
+                </div>
+            `;
 
             if (tests.length === 0) {
                 html += '<p style="color: #666;">暂无测试用例</p>';
@@ -285,12 +333,15 @@
                     html += `
                         <div class="test-item">
                             <div class="test-name">${test.name}</div>
-                            <div style="margin-bottom: 15px;">
+                            <div class="test-actions">
                                 <button class="btn btn-primary" onclick="runTest('${test.name}')">
                                     ▶️ 执行测试
                                 </button>
                                 <button class="btn btn-success" onclick="goToReports()">
                                     📊 查看所有报告
+                                </button>
+                                <button class="btn btn-danger" onclick="deletePytestTest('${test.name}')">
+                                    🗑️ 删除用例
                                 </button>
                             </div>
                             <div id="status_${test.name}" style="margin-bottom: 10px;"></div>
@@ -493,10 +544,10 @@
                 btn.textContent = '发送';
 
                 if (data.success) {
-                    alert('✅ ' + data.message);
+                    alert(data.message);
                     closeEmailModal();
                 } else {
-                    alert('❌ ' + data.message);
+                    alert(data.message);
                 }
             })
             .catch(error => {
@@ -504,6 +555,30 @@
                 btn.textContent = '发送';
                 console.error('发送邮件失败:', error);
                 alert('❌ 发送邮件失败，请稍后重试');
+            });
+        }
+
+        // 删除pytest测试用例
+        function deletePytestTest(testName) {
+            if (!confirm(`确定要删除测试用例 "${testName}" 吗？\n\n注意：这将从文件系统中删除对应的测试文件！`)) {
+                return;
+            }
+
+            fetch(`/api/tests/${encodeURIComponent(testName)}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('删除成功');
+                    loadTests();
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('删除失败:', error);
+                alert('删除失败，请稍后重试');
             });
         }
 
