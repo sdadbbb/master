@@ -564,7 +564,38 @@
                     if (data.success) {
                         availableActions = data.data;
                         renderActionsList();
+
+                        // 加载完操作后，如果有 case_id，加载用例数据
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const caseId = urlParams.get('case_id');
+                        if (caseId) {
+                            loadCaseData(caseId);
+                        }
                     }
+                });
+        }
+
+        // 加载用例数据
+        function loadCaseData(caseId) {
+            fetch(`/api/ui_test_cases/${caseId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const caseData = data.data;
+                        currentCaseId = caseData.id;
+                        document.getElementById('caseName').value = caseData.name || '';
+                        document.getElementById('caseDescription').value = caseData.description || '';
+                        document.getElementById('caseUrl').value = caseData.url || '';
+                        steps = caseData.steps || [];
+                        renderPipeline();
+                    } else {
+                        alert('加载用例失败: ' + (data.message || '未知错误'));
+                        window.location.href = '/api/ui_test_cases_list';
+                    }
+                })
+                .catch(err => {
+                    alert('加载用例失败');
+                    window.location.href = '/api/ui_test_cases_list';
                 });
         }
 
