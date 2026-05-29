@@ -353,6 +353,33 @@ class UITestExecutor:
 
         return result
 
+    def execute_cases(self, cases, progress_callback=None):
+        """
+        批量执行测试用例
+        :param cases: 测试用例列表
+        :param progress_callback: 进度回调函数，参数为 (当前序号, 总数, 用例名称)
+        :return: 测试结果列表
+        """
+        results = []
+        total = len(cases)
+
+        for index, case in enumerate(cases, 1):
+            if progress_callback:
+                progress_callback(index, total, case.get('name', ''))
+
+            logger.info(f"\n{'#'*60}")
+            logger.info(f"批量执行进度: {index}/{total} - {case.get('name')}")
+            logger.info(f"{'#'*60}")
+
+            result = self.execute_case(case)
+            results.append(result)
+
+        passed_count = sum(1 for r in results if r['passed'])
+        failed_count = len(results) - passed_count
+        logger.info(f"\n批量执行完成: 总计 {len(results)}, 通过 {passed_count}, 失败 {failed_count}")
+
+        return results
+
     def _get_action_name(self, action):
         """获取操作的中文名称"""
         action_names = {

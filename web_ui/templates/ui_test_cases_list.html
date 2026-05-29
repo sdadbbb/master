@@ -75,6 +75,50 @@
             background: #ff4d4f;
             color: white;
         }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-warning {
+            background: #faad14;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #ffc53d;
+        }
+
+        .btn-warning:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toolbar-hint {
+            margin-left: 12px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .batch-status-panel {
+            margin: 0 30px 20px;
+            padding: 16px 20px;
+            background: #f0f9ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .batch-status-panel.active {
+            display: block;
+        }
         
         .toolbar {
             padding: 20px 30px;
@@ -143,8 +187,19 @@
         </div>
         
         <div class="toolbar">
-            <div>共 <strong id="totalCount">0</strong> 个用例</div>
-            <button class="btn btn-danger" onclick="batchDelete()" id="batchDeleteBtn" style="display:none;">🗑️ 批量删除</button>
+            <div>
+                共 <strong id="totalCount">0</strong> 个用例
+                <span class="toolbar-hint">勾选左侧复选框后可批量执行</span>
+            </div>
+            <div class="toolbar-actions">
+                <button class="btn btn-warning" onclick="batchExecute()" id="batchRunBtn" disabled title="请先勾选用例">▶️ 批量执行</button>
+                <button class="btn btn-success" onclick="executeAllCases()" id="executeAllBtn" title="执行当前列表全部用例">▶️ 执行全部</button>
+                <button class="btn btn-danger" onclick="batchDelete()" id="batchDeleteBtn" style="display:none;">🗑️ 批量删除</button>
+            </div>
+        </div>
+
+        <div class="batch-status-panel" id="batchStatusPanel">
+            <div id="batchStatusText">准备执行...</div>
         </div>
         
         <div class="table-container">
@@ -224,6 +279,7 @@
             });
             
             tbody.innerHTML = html;
+            updateBatchButtons();
         }
 
         function createNewCase() {
@@ -332,14 +388,112 @@
             updateBatchDeleteButton();
         }
 
-        function updateBatchDeleteButton() {
-            const btn = document.getElementById('batchDeleteBtn');
+        function updateBatchButtons() {
+            const deleteBtn = document.getElementById('batchDeleteBtn');
+            const runBtn = document.getElementById('batchRunBtn');
+            const executeAllBtn = document.getElementById('executeAllBtn');
+
             if (selectedCases.size > 0) {
-                btn.style.display = 'block';
-                btn.textContent = `🗑️ 批量删除 (${selectedCases.size})`;
+                deleteBtn.style.display = 'block';
+                deleteBtn.textContent = `🗑️ 批量删除 (${selectedCases.size})`;
+                runBtn.disabled = false;
+                runBtn.textContent = `▶️ 批量执行 (${selectedCases.size})`;
+                runBtn.title = '执行已勾选的用例';
             } else {
-                btn.style.display = 'none';
+                deleteBtn.style.display = 'none';
+                runBtn.disabled = true;
+                runBtn.textContent = '▶️ 批量执行';
+                runBtn.title = '请先勾选用例';
             }
+
+            executeAllBtn.disabled = cases.length === 0;
+        }
+
+        function executeAllCases() {
+            if (cases.length === 0) {
+                alert('当前没有可执行的用例');
+                return;
+            }
+
+            if (!confirm(`确定要执行全部 ${cases.length} 个用例吗？\n将依次打开浏览器运行每个用例。`)) {
+                return;
+            }
+
+            const caseIds = cases.map(item => item.id);
+            startBatchExecute(caseIds);
+        }
+
+        function batchExecute() {
+            if (selectedCases.size === 0) {
+                alert('请先勾选要执行的用例');
+                return;
+            }
+
+            if (!confirm(`确定要执行选中的 ${selectedCases.size} 个用例吗？\n批量执行将依次打开浏览器运行每个用例。`)) {
+                return;
+            }
+
+            startBatchExecute(Array.from(selectedCases));
+        }
+
+        function startBatchExecute(caseIds) {
+            const statusPanel = document.getElementById('batchStatusPanel');
+            const statusText = document.getElementById('batchStatusText');
+            statusPanel.classList.add('active');
+            statusText.innerHTML = '<span style="color: #1890ff;">⏳ 正在启动批量执行...</span>';
+
+            fetch('/api/run_batch_ui_test_cases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ case_ids: caseIds })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    pollBatchStatus(data.task_id, statusText);
+                } else {
+                    statusText.innerHTML = `<span style="color: #ff4d4f;">❌ 启动失败: ${data.message}</span>`;
+                }
+            })
+            .catch(err => {
+                statusText.innerHTML = `<span style="color: #ff4d4f;">❌ 请求失败: ${err.message}</span>`;
+            });
+        }
+
+        function pollBatchStatus(taskId, statusText) {
+            const interval = setInterval(() => {
+                fetch(`/api/status/${taskId}`)
+                    .then(res => res.json())
+                    .then(statusData => {
+                        if (!statusData.success) return;
+                        const task = statusData.data;
+
+                        if (task.status === 'executing') {
+                            const progress = task.progress || {};
+                            const current = progress.current || 0;
+                            const total = progress.total || 0;
+                            const caseName = progress.case_name || '';
+                            statusText.innerHTML = `<span style="color: #1890ff;">💻 正在执行 (${current}/${total}): ${caseName || '准备中...'}</span>`;
+                        } else if (task.status === 'completed') {
+                            clearInterval(interval);
+                            const summary = task.summary || {};
+                            const color = task.success ? '#52c41a' : '#faad14';
+                            const icon = task.success ? '✅' : '⚠️';
+                            statusText.innerHTML = `<span style="color: ${color};">${icon} ${task.output || '执行完成'}</span>`;
+                            selectedCases.clear();
+                            document.getElementById('selectAll').checked = false;
+                            updateBatchButtons();
+                            loadCases();
+                        } else if (task.status === 'error') {
+                            clearInterval(interval);
+                            statusText.innerHTML = `<span style="color: #ff4d4f;">❌ 执行异常: ${task.output}</span>`;
+                        }
+                    });
+            }, 2000);
+        }
+
+        function updateBatchDeleteButton() {
+            updateBatchButtons();
         }
 
         function batchDelete() {

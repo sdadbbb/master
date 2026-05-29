@@ -24,3 +24,13 @@ email:
   use_ssl: true
   subject_prefix: "[测试报告]"
 
+# 大模型配置（兼容 OpenAI API 格式）
+llm:
+  provider: openai
+  api_key: "sk-12dfb9710e3d4b07ab49e121804f8eb5"
+  base_url: "https://api.deepseek.com"
+  model: "deepseek-v4-flash"
+  timeout: 120
+  max_tokens: null  # 不限制输出长度，使用模型默认上限
+  temperature: 0.3
+

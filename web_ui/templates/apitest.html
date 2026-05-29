@@ -156,6 +156,33 @@
             width: 300px;
             font-size: 14px;
         }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toolbar-hint {
+            color: #999;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+
+        .btn-warning {
+            background: #faad14;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #ffc53d;
+        }
+
+        .btn-warning:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
         
         .table-container {
             overflow-x: auto;
@@ -373,7 +400,7 @@
             <h1>🔌 接口自动化测试</h1>
             <div class="header-actions">
                 <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">🏠 返回主页</button>
-                <button class="btn btn-primary" onclick="showAddTestModal()">➕ 新增接口用例</button>
+                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新增接口用例</button>
             </div>
         </div>
         
@@ -389,11 +416,13 @@
                     <button class="btn btn-primary btn-small" onclick="searchTests()">🔍 搜索</button>
                     <button class="btn btn-secondary btn-small" onclick="clearSearch()">清空</button>
                 </div>
-                <div>
-                    <button class="btn btn-danger btn-small" onclick="batchDeleteTests()">批量删除</button>
+                <div class="toolbar-actions">
+                    <span class="toolbar-hint">勾选后可批量操作</span>
+                    <button class="btn btn-warning btn-small" onclick="runBatchTests()" id="batchRunBtn" disabled title="请先勾选用例">▶️ 批量执行</button>
+                    <button class="btn btn-success btn-small" onclick="runAllTests()" id="executeAllBtn" title="执行当前列表全部用例">▶️ 执行全部</button>
+                    <button class="btn btn-danger btn-small" onclick="batchDeleteTests()" id="batchDeleteBtn" disabled title="请先勾选用例">🗑️ 批量删除</button>
                 </div>
             </div>
-            
             <div class="table-container">
                 <table>
                     <thead>
@@ -576,6 +605,7 @@
                         </td>
                     </tr>
                 `;
+                updateBatchButtons();
                 return;
             }
             
@@ -625,6 +655,7 @@
                     </tr>
                 `;
             }
+            updateBatchButtons();
         }
 
         function changeTestPage(page) {
@@ -687,6 +718,7 @@
                     selectedTests.delete(cb.value);
                 }
             });
+            updateBatchButtons();
         }
         
         function toggleTestSelection(testId) {
@@ -695,6 +727,31 @@
             } else {
                 selectedTests.add(testId);
             }
+            updateBatchButtons();
+        }
+
+        function updateBatchButtons() {
+            const runBtn = document.getElementById('batchRunBtn');
+            const deleteBtn = document.getElementById('batchDeleteBtn');
+            const executeAllBtn = document.getElementById('executeAllBtn');
+
+            if (selectedTests.size > 0) {
+                runBtn.disabled = false;
+                runBtn.textContent = `▶️ 批量执行 (${selectedTests.size})`;
+                runBtn.title = '执行已勾选的用例';
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = `🗑️ 批量删除 (${selectedTests.size})`;
+                deleteBtn.title = '删除已勾选的用例';
+            } else {
+                runBtn.disabled = true;
+                runBtn.textContent = '▶️ 批量执行';
+                runBtn.title = '请先勾选用例';
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = '🗑️ 批量删除';
+                deleteBtn.title = '请先勾选用例';
+            }
+
+            executeAllBtn.disabled = currentTests.length === 0;
         }
         
         function openCreateModal() {
@@ -869,15 +926,35 @@
                 return;
             }
 
-            if (!confirm(`确定要执行选中的 ${selectedTests.size} 个测试用例吗？`)) {
+            await executeBatchTests(Array.from(selectedTests));
+        }
+
+        async function runAllTests() {
+            if (currentTests.length === 0) {
+                alert('当前没有可执行的测试用例');
                 return;
             }
-            
+
+            const testIds = currentTests.map(test => test.id);
+            await executeBatchTests(testIds);
+        }
+
+        async function executeBatchTests(testIds) {
+            if (!confirm(`确定要执行选中的 ${testIds.length} 个测试用例吗？`)) {
+                return;
+            }
+
+            const runBtn = document.getElementById('batchRunBtn');
+            const executeAllBtn = document.getElementById('executeAllBtn');
+            runBtn.disabled = true;
+            executeAllBtn.disabled = true;
+            runBtn.textContent = '⏳ 执行中...';
+
             try {
                 const response = await fetch('/api/run_batch_tests', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({test_ids: Array.from(selectedTests)})
+                    body: JSON.stringify({test_ids: testIds})
                 });
                 
                 const data = await response.json();
@@ -887,13 +964,20 @@
                     alert(`执行完成！\n总计: ${summary.total}\n通过: ${summary.passed}\n失败: ${summary.failed}`);
                     selectedTests.clear();
                     document.getElementById('selectAll').checked = false;
+                    loadTests();
                     loadResults();
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.querySelectorAll('.tab')[1].classList.add('active');
+                    document.getElementById('results-tab').classList.add('active');
                 } else {
                     alert(data.message || '执行失败');
                 }
             } catch (error) {
                 console.error('执行失败:', error);
                 alert('执行失败');
+            } finally {
+                updateBatchButtons();
             }
         }
 

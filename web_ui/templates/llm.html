@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 智能测试助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f0f2f5; height: 100vh; display: flex; flex-direction: column; }
+
+        .top-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; padding: 15px 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .top-bar h1 { font-size: 20px; }
+        .top-bar .status { font-size: 13px; opacity: 0.9; }
+        .top-bar .status.error { color: #ffccc7; }
+
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar {
+            width: 260px; background: white; border-right: 1px solid #e8e8e8;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #e8e8e8; }
+        .session-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .session-item {
+            padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 4px;
+            font-size: 13px; color: #333; display: flex; justify-content: space-between; align-items: center;
+        }
+        .session-item:hover { background: #f5f5f5; }
+        .session-item.active { background: #e6f0ff; color: #667eea; font-weight: 500; }
+        .session-item .del-btn { opacity: 0; color: #ff4d4f; font-size: 12px; border: none; background: none; cursor: pointer; }
+        .session-item:hover .del-btn { opacity: 1; }
+
+        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+        .tabs { display: flex; background: white; border-bottom: 1px solid #e8e8e8; padding: 0 20px; }
+        .tab {
+            padding: 12px 20px; cursor: pointer; border: none; background: none;
+            font-size: 14px; color: #666; border-bottom: 2px solid transparent;
+        }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
+
+        .tab-panel { flex: 1; overflow: hidden; display: none; }
+        .tab-panel.active { display: flex; flex-direction: column; }
+
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; font-weight: 500; transition: all 0.2s;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #52c41a; color: white; }
+        .btn-warning { background: #faad14; color: white; }
+        .btn-danger { background: #ff4d4f; color: white; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-small { padding: 5px 10px; font-size: 12px; }
+
+        /* 对话区域 */
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px 30px; }
+        .message { margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
+        .message.user { flex-direction: row-reverse; }
+        .message-avatar {
+            width: 36px; height: 36px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+        }
+        .message.user .message-avatar { background: #667eea; color: white; }
+        .message.assistant .message-avatar { background: #52c41a; color: white; }
+        .message-body {
+            max-width: min(820px, 78%);
+            display: flex;
+            flex-direction: column;
+        }
+        .message.user .message-body { align-items: flex-end; }
+        .message-content {
+            display: inline-block;
+            width: fit-content;
+            max-width: 100%;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .message.user .message-content { background: #667eea; color: white; border-bottom-right-radius: 4px; }
+        .message.assistant .message-content { background: white; color: #333; border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .message-time { font-size: 11px; color: #999; margin-top: 4px; }
+
+        .chat-input-area {
+            padding: 16px 24px; background: white; border-top: 1px solid #e8e8e8;
+            display: flex; gap: 12px; align-items: flex-end; width: 100%;
+        }
+        .chat-input-area textarea {
+            flex: 1;
+            width: 100%;
+            min-width: 0;
+            padding: 12px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 88px;
+            max-height: 200px;
+            font-family: inherit;
+        }
+        .chat-input-area textarea:focus { outline: none; border-color: #667eea; }
+        .chat-input-area .btn-primary {
+            flex-shrink: 0;
+            min-width: 72px;
+            height: 44px;
+        }
+
+        /* 用例生成区域 */
+        .generate-panel { flex: 1; overflow-y: auto; padding: 20px; }
+        .card {
+            background: white; border-radius: 8px; padding: 20px; margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .card h3 { font-size: 16px; margin-bottom: 12px; color: #333; }
+        .upload-zone {
+            border: 2px dashed #d9d9d9; border-radius: 8px; padding: 30px; text-align: center;
+            cursor: pointer; transition: all 0.3s; color: #999;
+        }
+        .upload-zone:hover { border-color: #667eea; color: #667eea; }
+        .upload-zone.dragover { border-color: #667eea; background: #f0f5ff; }
+        textarea.requirement-input {
+            width: 100%; min-height: 150px; padding: 12px; border: 1px solid #d9d9d9;
+            border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;
+        }
+        .action-bar { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+
+        /* 用例预览 */
+        .case-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        .case-table th, .case-table td { padding: 8px 12px; border: 1px solid #e8e8e8; text-align: left; }
+        .case-table th { background: #fafafa; font-weight: 600; }
+        .case-table tr:hover { background: #f5f5f5; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+        .badge-api { background: #e6f7ff; color: #1890ff; }
+        .badge-ui { background: #f6ffed; color: #52c41a; }
+        .badge-high { background: #fff2f0; color: #ff4d4f; }
+        .badge-mid { background: #fffbe6; color: #faad14; }
+
+        .analysis-box {
+            background: #f9f9f9; border-left: 4px solid #667eea; padding: 15px;
+            border-radius: 0 6px 6px 0; font-size: 14px; line-height: 1.8; white-space: pre-wrap;
+        }
+
+        /* 文件列表 */
+        .file-list { padding: 20px; overflow-y: auto; flex: 1; }
+        .file-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; background: white; border-radius: 8px; margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .file-item .file-info { flex: 1; }
+        .file-item .file-name { font-weight: 500; color: #333; }
+        .file-item .file-meta { font-size: 12px; color: #999; margin-top: 4px; }
+        .file-actions { display: flex; gap: 8px; }
+
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .loading::after { content: ''; animation: dots 1.5s infinite; }
+        @keyframes dots { 0%,20% { content: '.'; } 40% { content: '..'; } 60%,100% { content: '...'; } }
+
+        .empty-hint { text-align: center; padding: 60px 20px; color: #bbb; }
+        .empty-hint .icon { font-size: 48px; margin-bottom: 12px; }
+
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .summary-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 16px; border-radius: 8px; text-align: center; }
+        .summary-card .num { font-size: 28px; font-weight: 700; }
+        .summary-card .label { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div>
+            <h1>🤖 AI 智能测试助手</h1>
+            <div class="status" id="llmStatus">检查配置中...</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary" onclick="window.location.href='/'">🏠 返回主页</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="btn btn-primary" style="width:100%;" onclick="newChat()">➕ 新对话</button>
+            </div>
+            <div class="session-list" id="sessionList">
+                <div class="empty-hint" style="padding:20px;">暂无对话</div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('chat')">💬 对话</button>
+                <button class="tab" onclick="switchTab('generate')">📝 用例生成</button>
+                <button class="tab" onclick="switchTab('files')">📁 生成文件</button>
+            </div>
+
+            <!-- 对话面板 -->
+            <div class="tab-panel active" id="chat-panel">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-hint">
+                        <div class="icon">🤖</div>
+                        <p>开始与 AI 测试助手对话</p>
+                        <p style="font-size:13px;margin-top:8px;">可咨询测试方案、用例设计等问题</p>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <textarea id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行..." rows="3"
+                              onkeydown="handleChatKey(event)"></textarea>
+                    <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn">发送</button>
+                </div>
+            </div>
+
+            <!-- 用例生成面板 -->
+            <div class="tab-panel" id="generate-panel">
+                <div class="generate-panel">
+                    <div class="card">
+                        <h3>📄 上传需求文档</h3>
+                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                            <div style="font-size:32px;margin-bottom:8px;">📎</div>
+                            <p>点击或拖拽上传需求文档</p>
+                            <p style="font-size:12px;margin-top:4px;">支持 txt、md、docx 格式</p>
+                        </div>
+                        <input type="file" id="fileInput" accept=".txt,.md,.docx,.json,.yaml,.yml" style="display:none;" onchange="handleFileSelect(event)">
+                        <div id="uploadInfo" style="margin-top:10px;font-size:13px;color:#52c41a;display:none;"></div>
+                    </div>
+
+                    <div class="card">
+                        <h3>✏️ 或直接输入需求描述</h3>
+                        <textarea class="requirement-input" id="requirementText" placeholder="在此输入需求描述，例如：&#10;系统需要实现用户登录功能，支持用户名密码登录，登录成功后跳转到首页..."></textarea>
+                        <div class="action-bar">
+                            <button class="btn btn-primary" onclick="generateCases()" id="generateBtn">🚀 生成测试用例</button>
+                            <button class="btn btn-success" onclick="importCases()" id="importBtn" disabled>📥 导入平台</button>
+                            <button class="btn btn-warning" onclick="runCases()" id="runBtn" disabled>▶️ 执行用例</button>
+                        </div>
+                    </div>
+
+                    <div id="generateResult" style="display:none;">
+                        <div class="card">
+                            <h3>📊 需求分析</h3>
+                            <div class="analysis-box" id="analysisContent"></div>
+                        </div>
+                        <div class="card">
+                            <h3>📋 生成的测试用例</h3>
+                            <div class="summary-cards" id="summaryCards"></div>
+                            <div id="casesPreview"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文件列表面板 -->
+            <div class="tab-panel" id="files-panel">
+                <div class="file-list" id="fileList">
+                    <div class="loading">加载中</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+        let uploadedFile = null;
+        let lastGenerateResult = null;
+        let lastXlsxFilename = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            checkConfig();
+            loadSessions();
+            setupDragDrop();
+        });
+
+        async function checkConfig() {
+            try {
+                const res = await fetch('/api/llm/config');
+                const data = await res.json();
+                const el = document.getElementById('llmStatus');
+                if (data.success && data.data.configured) {
+                    el.textContent = `已连接 | 模型: ${data.data.model}`;
+                } else {
+                    el.textContent = '⚠️ 请先在 config/config.yml 中配置 llm.api_key';
+                    el.classList.add('error');
+                }
+            } catch (e) {
+                document.getElementById('llmStatus').textContent = '配置检查失败';
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            const tabs = document.querySelectorAll('.tab');
+            const tabIndex = { chat: 0, generate: 1, files: 2 };
+            if (tabs[tabIndex[tab]]) tabs[tabIndex[tab]].classList.add('active');
+            document.getElementById(tab + '-panel').classList.add('active');
+            if (tab === 'files') loadFiles();
+        }
+
+        // ========== 对话功能 ==========
+        async function loadSessions() {
+            const res = await fetch('/api/llm/sessions');
+            const data = await res.json();
+            const list = document.getElementById('sessionList');
+            if (!data.success || data.data.length === 0) {
+                list.innerHTML = '<div class="empty-hint" style="padding:20px;">暂无对话</div>';
+                return;
+            }
+            list.innerHTML = data.data.map(s => `
+                <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.session_id}')">
+                    <span>${s.title}</span>
+                    <button class="del-btn" onclick="event.stopPropagation();deleteSession('${s.session_id}')">✕</button>
+                </div>
+            `).join('');
+        }
+
+        async function newChat() {
+            currentSessionId = null;
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="empty-hint"><div class="icon">🤖</div><p>开始新对话</p></div>`;
+            document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('chatInput').focus();
+        }
+
+        async function loadSession(sessionId) {
+            currentSessionId = sessionId;
+            const res = await fetch(`/api/llm/sessions/${sessionId}`);
+            const data = await res.json();
+            if (!data.success) return;
+
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = '';
+            data.data.messages.forEach(msg => appendMessage(msg.role, msg.content, msg.time));
+            loadSessions();
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm('确定删除此对话？')) return;
+            await fetch(`/api/llm/sessions/${sessionId}`, { method: 'DELETE' });
+            if (currentSessionId === sessionId) newChat();
+            loadSessions();
+        }
+
+        function appendMessage(role, content, time) {
+            const container = document.getElementById('chatMessages');
+            const empty = container.querySelector('.empty-hint');
+            if (empty) empty.remove();
+
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerHTML = `
+                <div class="message-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-body">
+                    <div class="message-content">${escapeHtml(content)}</div>
+                    ${time ? `<div class="message-time">${time}</div>` : ''}
+                </div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            input.value = '';
+            appendMessage('user', message);
+
+            try {
+                const res = await fetch('/api/llm/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentSessionId = data.data.session_id;
+                    appendMessage('assistant', data.data.reply);
+                    loadSessions();
+                } else {
+                    appendMessage('assistant', '❌ ' + data.message);
+                }
+            } catch (e) {
+                appendMessage('assistant', '❌ 请求失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                input.focus();
+            }
+        }
+
+        // ========== 文件上传 ==========
+        function setupDragDrop() {
+            const zone = document.getElementById('uploadZone');
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+            });
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length) uploadFile(e.target.files[0]);
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            const info = document.getElementById('uploadInfo');
+            info.style.display = 'block';
+            info.textContent = '⏳ 上传中...';
+
+            try {
+                const res = await fetch('/api/llm/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    uploadedFile = data.data.filename;
+                    info.innerHTML = `✅ 已上传: <strong>${data.data.original_name}</strong> (${data.data.content_length} 字符)`;
+                } else {
+                    info.style.color = '#ff4d4f';
+                    info.textContent = '❌ ' + data.message;
+                }
+            } catch (e) {
+                info.style.color = '#ff4d4f';
+                info.textContent = '❌ 上传失败';
+            }
+        }
+
+        // ========== 用例生成 ==========
+        async function generateCases() {
+            const text = document.getElementById('requirementText').value.trim();
+            if (!text && !uploadedFile) {
+                alert('请上传需求文档或输入需求描述');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 生成中，请耐心等待...';
+
+            try {
+                const res = await fetch('/api/llm/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        requirement_text: text,
+                        uploaded_file: uploadedFile
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    lastGenerateResult = data.data;
+                    lastXlsxFilename = data.data.xlsx_filename;
+                    renderGenerateResult(data.data);
+                    document.getElementById('importBtn').disabled = false;
+                    document.getElementById('runBtn').disabled = false;
+                    alert(`生成成功！\n接口用例: ${data.data.api_count} 个\nUI用例: ${data.data.ui_count} 个\n已保存: ${data.data.xlsx_filename}`);
+                } else {
+                    alert('生成失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('生成失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 生成测试用例';
+            }
+        }
+
+        function renderGenerateResult(data) {
+            document.getElementById('generateResult').style.display = 'block';
+            document.getElementById('analysisContent').textContent = data.requirements_analysis || '无';
+
+            document.getElementById('summaryCards').innerHTML = `
+                <div class="summary-card"><div class="num">${data.api_count}</div><div class="label">接口用例</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#52c41a,#73d13d)"><div class="num">${data.ui_count}</div><div class="label">UI用例</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#faad14,#ffc53d)"><div class="num">${data.api_count + data.ui_count}</div><div class="label">总计</div></div>
+            `;
+
+            let html = '';
+            if (data.api_cases.length) {
+                html += '<h4 style="margin:12px 0 8px;">🔌 接口测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>方法</th><th>URL</th><th>优先级</th></tr>';
+                data.api_cases.forEach(c => {
+                    html += `<tr><td>${c.module||'-'}</td><td>${c.name}</td><td><span class="badge badge-api">${c.request?.method||'GET'}</span></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${c.request?.url||'-'}</td><td><span class="badge badge-${c.priority==='高'?'high':'mid'}">${c.priority||'中'}</span></td></tr>`;
+                });
+                html += '</table>';
+            }
+            if (data.ui_cases.length) {
+                html += '<h4 style="margin:16px 0 8px;">🎨 UI测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>起始URL</th><th>步骤数</th><th>优先级</th></tr>';
+                data.ui_cases.forEach(c => {
+                    html += `<tr><td>${c.module||'-'}</td><td>${c.name}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${c.url||'-'}</td><td>${(c.steps||[]).length}</td><td><span class="badge badge-${c.priority==='高'?'high':'mid'}">${c.priority||'中'}</span></td></tr>`;
+                });
+                html += '</table>';
+            }
+            document.getElementById('casesPreview').innerHTML = html || '<p style="color:#999;">未生成用例</p>';
+        }
+
+        async function importCases() {
+            if (!lastGenerateResult && !lastXlsxFilename) { alert('请先生成用例'); return; }
+            if (!confirm('确定将生成的用例导入测试平台？')) return;
+
+            try {
+                const res = await fetch('/api/llm/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xlsx_filename: lastXlsxFilename })
+                });
+                const data = await res.json();
+                alert(data.success ? data.message : ('导入失败: ' + data.message));
+            } catch (e) { alert('导入失败: ' + e.message); }
+        }
+
+        async function runCases() {
+            if (!lastGenerateResult && !lastXlsxFilename) { alert('请先生成用例'); return; }
+            if (!confirm('确定执行生成的测试用例？\n接口用例将直接执行，UI用例将启动浏览器。')) return;
+
+            const btn = document.getElementById('runBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 执行中...';
+
+            try {
+                const res = await fetch('/api/llm/run_cases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        xlsx_filename: lastXlsxFilename,
+                        api_cases: lastGenerateResult?.api_cases,
+                        ui_cases: lastGenerateResult?.ui_cases
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const s = data.data.summary;
+                    alert(`执行完成！\n接口: ${s.api_passed}/${s.api_total} 通过\nUI: ${s.ui_passed}/${s.ui_total} 通过`);
+                } else {
+                    alert('执行失败: ' + data.message);
+                }
+            } catch (e) { alert('执行失败: ' + e.message); }
+            finally { btn.disabled = false; btn.textContent = '▶️ 执行用例'; }
+        }
+
+        // ========== 文件列表 ==========
+        async function loadFiles() {
+            const container = document.getElementById('fileList');
+            try {
+                const res = await fetch('/api/llm/files');
+                const data = await res.json();
+                if (!data.success || data.data.length === 0) {
+                    container.innerHTML = '<div class="empty-hint"><div class="icon">📁</div><p>暂无生成的文件</p><p style="font-size:13px;">在「用例生成」标签页生成用例后会自动保存 xlsx 文件</p></div>';
+                    return;
+                }
+                container.innerHTML = data.data.map(f => `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">📊 ${f.filename}</div>
+                            <div class="file-meta">${f.created_at} · ${(f.size/1024).toFixed(1)} KB</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-primary btn-small" onclick="previewFile('${f.filename}')">预览</button>
+                            <button class="btn btn-success btn-small" onclick="downloadFile('${f.filename}')">下载</button>
+                            <button class="btn btn-warning btn-small" onclick="importFromFile('${f.filename}')">导入</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-hint">加载失败</div>';
+            }
+        }
+
+        function downloadFile(filename) {
+            window.open(`/api/llm/files/${filename}`, '_blank');
+        }
+
+        async function previewFile(filename) {
+            const res = await fetch(`/api/llm/files/${filename}/preview`);
+            const data = await res.json();
+            if (data.success) {
+                lastXlsxFilename = filename;
+                lastGenerateResult = data.data;
+                renderGenerateResult({
+                    requirements_analysis: data.data.requirements_analysis,
+                    api_cases: data.data.api_cases,
+                    ui_cases: data.data.ui_cases,
+                    api_count: data.data.api_cases.length,
+                    ui_count: data.data.ui_cases.length
+                });
+                document.getElementById('importBtn').disabled = false;
+                document.getElementById('runBtn').disabled = false;
+                switchTab('generate');
+                document.getElementById('generateResult').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        async function importFromFile(filename) {
+            if (!confirm(`确定从 ${filename} 导入用例到测试平台？`)) return;
+            const res = await fetch('/api/llm/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xlsx_filename: filename })
+            });
+            const data = await res.json();
+            alert(data.success ? data.message : ('导入失败: ' + data.message));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

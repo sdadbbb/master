@@ -10,6 +10,7 @@ from web_ui.task import task_bp
 from web_ui.upload import upload_bp
 from web_ui.api import api_bp
 from web_ui.ui import ui_test_bp
+from web_ui.llm import llm_bp
 
 app = Flask(__name__, template_folder='templates')
 app.config['JSON_AS_ASCII'] = False
@@ -21,6 +22,7 @@ app.register_blueprint(list_report_bp)
 app.register_blueprint(list_screenshots_bp)
 app.register_blueprint(api_bp)
 app.register_blueprint(ui_test_bp)
+app.register_blueprint(llm_bp)
 
 
 if not os.path.exists(REPORT_DIR):

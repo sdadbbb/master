@@ -1,6 +1,10 @@
+import threading
+
 from flask import Blueprint, jsonify, request, render_template
 from web_ui.conf import logger, running_tasks
 from page.uiTestCaseManager import UITestCaseManager
+from page.uiTestExecutor import UITestExecutor
+from page.uiTestResultManager import UITestResultManager
 from datetime import datetime
 from web_ui.task import create_project_zip
 
@@ -8,6 +12,7 @@ from web_ui.task import create_project_zip
 ui_test_bp = Blueprint('ui_test', __name__, url_prefix='/api')
 
 ui_case_manager = UITestCaseManager()
+ui_result_manager = UITestResultManager()
 
 
 @ui_test_bp.route('/ui_test_editor')
@@ -152,6 +157,157 @@ def run_ui_test_case():
         })
     except Exception as e:
         logger.error(f"下发 UI 测试任务失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+def _run_batch_ui_tests_in_background(task_id, cases, case_names):
+    """后台线程执行批量 UI 测试"""
+    executor = UITestExecutor()
+
+    def update_progress(current, total, case_name):
+        running_tasks[task_id] = {
+            'status': 'executing',
+            'success': None,
+            'output': f'正在执行 ({current}/{total}): {case_name}',
+            'report_path': None,
+            'type': 'ui_test_batch',
+            'case_names': case_names,
+            'progress': {'current': current, 'total': total, 'case_name': case_name}
+        }
+
+    try:
+        results = executor.execute_cases(cases, progress_callback=update_progress)
+        summary = ui_result_manager.save_result(task_id, results, case_names)
+
+        passed_count = summary['passed']
+        failed_count = summary['failed']
+
+        running_tasks[task_id] = {
+            'status': 'completed',
+            'success': failed_count == 0,
+            'output': f'批量执行完成: 总计{summary["total"]}, 通过{passed_count}, 失败{failed_count}',
+            'report_path': None,
+            'type': 'ui_test_batch',
+            'case_names': case_names,
+            'summary': summary,
+            'progress': {'current': summary['total'], 'total': summary['total']}
+        }
+        logger.info(f"批量UI测试完成: 任务 {task_id}, 通过 {passed_count}, 失败 {failed_count}")
+    except Exception as e:
+        logger.error(f"批量UI测试异常: {str(e)}")
+        running_tasks[task_id] = {
+            'status': 'error',
+            'success': False,
+            'output': f'批量执行异常: {str(e)}',
+            'report_path': None,
+            'type': 'ui_test_batch',
+            'case_names': case_names
+        }
+
+
+@ui_test_bp.route('/run_batch_ui_test_cases', methods=['POST'])
+def run_batch_ui_test_cases():
+    """批量执行 UI 测试用例（后台异步执行）"""
+    try:
+        data = request.json
+        case_ids = data.get('case_ids', [])
+
+        if not case_ids:
+            return jsonify({'success': False, 'message': '请选择要执行的测试用例'}), 400
+
+        cases = []
+        case_names = []
+        for case_id in case_ids:
+            case = ui_case_manager.get_case_by_id(case_id)
+            if case:
+                cases.append(case)
+                case_names.append(case.get('name', case_id))
+
+        if not cases:
+            return jsonify({'success': False, 'message': '没有找到有效的测试用例'}), 404
+
+        task_id = f"ui_batch_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        logger.info(f"收到批量 UI 测试请求: {len(cases)} 个用例, 任务 ID: {task_id}")
+
+        running_tasks[task_id] = {
+            'status': 'executing',
+            'success': None,
+            'output': f'准备执行 {len(cases)} 个用例...',
+            'report_path': None,
+            'type': 'ui_test_batch',
+            'case_ids': case_ids,
+            'case_names': case_names,
+            'progress': {'current': 0, 'total': len(cases)}
+        }
+
+        thread = threading.Thread(
+            target=_run_batch_ui_tests_in_background,
+            args=(task_id, cases, case_names),
+            daemon=True
+        )
+        thread.start()
+
+        return jsonify({
+            'success': True,
+            'task_id': task_id,
+            'message': f'已启动批量执行，共 {len(cases)} 个用例'
+        })
+    except Exception as e:
+        logger.error(f"批量执行 UI 测试失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@ui_test_bp.route('/ui_test_results', methods=['GET'])
+def get_ui_test_results():
+    """获取 UI 批量测试结果列表"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        results, total = ui_result_manager.list_results(page, per_page)
+        total_pages = (total + per_page - 1) // per_page if per_page > 0 else 0
+
+        return jsonify({
+            'success': True,
+            'data': results,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'total_pages': total_pages,
+                'has_prev': page > 1,
+                'has_next': page < total_pages
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取 UI 测试结果列表失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@ui_test_bp.route('/ui_test_results/<task_id>', methods=['GET'])
+def get_ui_test_result(task_id):
+    """获取单个 UI 批量测试结果详情"""
+    try:
+        result = ui_result_manager.get_result(task_id)
+
+        if result:
+            return jsonify({'success': True, 'data': result})
+        else:
+            return jsonify({'success': False, 'message': '测试结果不存在'}), 404
+    except Exception as e:
+        logger.error(f"获取 UI 测试结果失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@ui_test_bp.route('/ui_test_results/<task_id>', methods=['DELETE'])
+def delete_ui_test_result(task_id):
+    """删除 UI 测试结果"""
+    try:
+        ui_result_manager.delete_result(task_id)
+        logger.info(f"删除 UI 测试结果: {task_id}")
+        return jsonify({'success': True, 'message': '删除成功'})
+    except Exception as e:
+        logger.error(f"删除 UI 测试结果失败: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
