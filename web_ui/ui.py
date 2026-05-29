@@ -1,7 +1,7 @@
 import threading
 
 from flask import Blueprint, jsonify, request, render_template
-from web_ui.conf import logger, running_tasks
+from web_ui.conf import logger, get_running_tasks
 from page.uiTestCaseManager import UITestCaseManager
 from page.uiTestExecutor import UITestExecutor
 from page.uiTestResultManager import UITestResultManager
@@ -139,6 +139,7 @@ def run_ui_test_case():
 
         zip_path = create_project_zip(task_id)
 
+        running_tasks = get_running_tasks()
         running_tasks[task_id] = {
             'status': 'waiting_local',
             'success': None,
@@ -163,6 +164,7 @@ def run_ui_test_case():
 def _run_batch_ui_tests_in_background(task_id, cases, case_names):
     """后台线程执行批量 UI 测试"""
     executor = UITestExecutor()
+    running_tasks = get_running_tasks()
 
     def update_progress(current, total, case_name):
         running_tasks[task_id] = {
@@ -229,6 +231,7 @@ def run_batch_ui_test_cases():
         task_id = f"ui_batch_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         logger.info(f"收到批量 UI 测试请求: {len(cases)} 个用例, 任务 ID: {task_id}")
 
+        running_tasks = get_running_tasks()
         running_tasks[task_id] = {
             'status': 'executing',
             'success': None,

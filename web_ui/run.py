@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-from web_ui.conf import logger, REPORT_DIR, running_tasks
+from web_ui.conf import logger, REPORT_DIR, get_running_tasks
 from web_ui.task import create_project_zip
 
 run_bp = Blueprint('run', __name__)
@@ -18,6 +18,7 @@ def run_test():
 
     zip_path = create_project_zip(task_id)
 
+    running_tasks = get_running_tasks()
     running_tasks[task_id] = {
         'status': 'waiting_local',
         'success': None,

@@ -1,7 +1,7 @@
 import os
 
 from flask import Blueprint, jsonify, request
-from web_ui.conf import logger, REPORT_DIR, running_tasks
+from web_ui.conf import logger, REPORT_DIR, get_running_tasks
 
 upload_bp = Blueprint('upload', __name__)
 
@@ -14,6 +14,7 @@ def upload_report():
 
     file = request.files['report']
     task_id = request.form.get('task_id')
+    running_tasks = get_running_tasks()
 
     if task_id not in running_tasks:
         return jsonify({'success': False, 'message': '任务ID不存在或已过期'})

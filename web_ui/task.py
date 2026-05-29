@@ -2,7 +2,7 @@ import os
 import zipfile
 
 from flask import Blueprint, jsonify, request, send_file
-from web_ui.conf import logger, REPORT_DIR, running_tasks
+from web_ui.conf import logger, REPORT_DIR, get_running_tasks
 
 task_bp = Blueprint('task', __name__)
 
@@ -45,6 +45,7 @@ def create_project_zip(task_id):
 @task_bp.route('/api/poll_task')
 def poll_task():
     """供本地客户端轮询领取任务"""
+    running_tasks = get_running_tasks()
     pending_task_id = None
     pending_task = None
 
@@ -96,6 +97,7 @@ def get_task_zip(task_id):
 @task_bp.route('/api/status/<task_id>')
 def get_status(task_id):
     logger.debug(f"查询任务状态：{task_id}")
+    running_tasks = get_running_tasks()
 
     if task_id not in running_tasks:
         logger.warning(f"任务不存在：{task_id}")
