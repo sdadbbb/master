@@ -76,7 +76,7 @@ class LLMCaseGenerator:
         self.ui_manager = UITestCaseManager()
 
     def read_document(self, filepath):
-        """读取需求文档内容，支持 txt/md/docx"""
+        """读取需求文档内容，支持 txt/md/docx/doc"""
         ext = os.path.splitext(filepath)[1].lower()
 
         if ext in ('.txt', '.md', '.json', '.yaml', '.yml'):
@@ -97,7 +97,28 @@ class LLMCaseGenerator:
             except Exception as e:
                 raise ValueError(f'读取 docx 文件失败: {str(e)}')
 
-        raise ValueError(f'不支持的文件格式: {ext}，请上传 txt/md/docx 文件')
+        if ext == '.doc':
+            try:
+                import win32com.client
+                # 使用 Word COM 接口转换 doc 为文本
+                word = win32com.client.Dispatch('Word.Application')
+                word.Visible = False
+                doc = word.Documents.Open(os.path.abspath(filepath))
+                content = doc.Content.Text
+                doc.Close()
+                word.Quit()
+                return content
+            except ImportError:
+                try:
+                    # 备选方案：使用 textract
+                    import textract
+                    return textract.process(filepath).decode('utf-8')
+                except Exception as e:
+                    raise ValueError(f'读取 doc 文件失败，请安装 pywin32 或 textract: {str(e)}')
+            except Exception as e:
+                raise ValueError(f'读取 doc 文件失败: {str(e)}')
+
+        raise ValueError(f'不支持的文件格式: {ext}，请上传 txt/md/docx/doc 文件')
 
     def generate_from_text(self, requirement_text, extra_prompt=''):
         """

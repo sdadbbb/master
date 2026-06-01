@@ -6,3 +6,7 @@ pyyaml>=6.0
 requests>=2.28.0
 openpyxl>=3.1.0
 python-docx>=1.1.0
+# Windows 下读取 .doc 文件需要 pywin32（可选）
+# pywin32>=306
+# 跨平台读取 .doc 文件的备选方案（可选）
+# textract>=1.6.5

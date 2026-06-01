@@ -19,7 +19,7 @@ case_generator = LLMCaseGenerator()
 xlsx_manager = LLMXlsxManager()
 api_result_manager = ApiTestResultManager()
 
-ALLOWED_EXTENSIONS = {'txt', 'md', 'docx', 'json', 'yaml', 'yml'}
+ALLOWED_EXTENSIONS = {'txt', 'md', 'docx', 'doc', 'json', 'yaml', 'yml'}
 
 
 def _get_file_extension(filename):
