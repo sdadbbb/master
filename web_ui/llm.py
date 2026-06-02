@@ -1,4 +1,5 @@
 import os
+import json
 import threading
 from flask import Blueprint, jsonify, request, render_template, send_file
 from werkzeug.utils import secure_filename
@@ -7,6 +8,7 @@ from page.llmClient import LLMClient
 from page.llmChatManager import LLMChatManager
 from page.llmCaseGenerator import LLMCaseGenerator
 from page.llmXlsxManager import LLMXlsxManager
+from page.llmTools import TOOLS_SPEC, get_tool_executor
 from page.api_page import ApiTester
 from page.uiTestExecutor import UITestExecutor
 from page.apiTestReusltManager import ApiTestResultManager
@@ -354,4 +356,106 @@ def run_generated_cases():
         })
     except Exception as e:
         logger.error(f"执行用例失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== AI 智能生成（Function Calling）====================
+
+@llm_bp.route('/api/llm/smart_generate', methods=['POST'])
+def smart_generate():
+    """
+    AI 智能生成测试用例（支持 Function Calling）
+    AI 可以根据需求描述自动决定调用本地方法生成用例
+    """
+    try:
+        data = request.json or {}
+        requirement = data.get('requirement', '').strip()
+        extra_prompt = data.get('extra_prompt', '')
+        
+        if not requirement:
+            return jsonify({'success': False, 'message': '请提供需求描述'}), 400
+        
+        # 构建系统提示词
+        system_prompt = """你是一名资深的测试工程师，擅长根据需求描述设计测试用例。
+        
+你可以使用以下工具来帮助生成测试用例：
+1. generate_api_test_case - 生成单个接口测试用例
+2. generate_ui_test_case - 生成单个UI测试用例
+3. batch_generate_api_cases - 批量生成多个接口测试用例
+4. batch_generate_ui_cases - 批量生成多个UI测试用例
+
+工作流程：
+1. 分析用户需求，理解需要测试的功能
+2. 设计合适的测试用例（包括正常场景和异常场景）
+3. 调用相应的工具将用例保存到平台
+4. 向用户汇报生成的用例情况
+
+注意：
+- 优先使用批量工具（batch_generate_*）当有多个用例时
+- 确保用例名称清晰、描述准确
+- 覆盖主要的测试场景"""
+        
+        user_message = f"""请根据以下需求描述，设计并生成测试用例：
+
+{requirement}
+
+{extra_prompt}"""
+        
+        messages = [
+            {'role': 'system', 'content': system_prompt},
+            {'role': 'user', 'content': user_message}
+        ]
+        
+        # 调用 LLM（带工具）
+        client = LLMClient()
+        result = client.chat_with_tools(messages, tools=TOOLS_SPEC)
+        
+        tool_call_results = []
+        
+        # 如果 AI 决定调用工具
+        if result['tool_calls']:
+            for tool_call in result['tool_calls']:
+                func_name = tool_call['function']['name']
+                args = json.loads(tool_call['function']['arguments'])
+                
+                logger.info(f"执行工具调用: {func_name}")
+                
+                # 获取并执行对应的工具函数
+                executor = get_tool_executor(func_name)
+                if executor:
+                    exec_result = executor(args)
+                    tool_call_results.append({
+                        'tool': func_name,
+                        'success': exec_result.get('success', False),
+                        'result': exec_result
+                    })
+                else:
+                    logger.warning(f"未找到工具执行器: {func_name}")
+                    tool_call_results.append({
+                        'tool': func_name,
+                        'success': False,
+                        'error': f'未知工具: {func_name}'
+                    })
+        
+        # 统计结果
+        total_tools = len(tool_call_results)
+        success_tools = sum(1 for r in tool_call_results if r.get('success'))
+        
+        response_data = {
+            'ai_content': result['content'],  # AI 的文本回复（如果有）
+            'tool_calls_count': total_tools,
+            'success_count': success_tools,
+            'failed_count': total_tools - success_tools,
+            'tool_results': tool_call_results
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': response_data
+        })
+        
+    except Exception as e:
+        logger.error(f"AI 智能生成失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500

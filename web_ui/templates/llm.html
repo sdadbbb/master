@@ -223,6 +223,20 @@
             <!-- 用例生成面板 -->
             <div class="tab-panel" id="generate-panel">
                 <div class="generate-panel">
+                    <!-- 智能生成区域 -->
+                    <div class="card" style="border: 2px solid #667eea; background: linear-gradient(135deg, #f0f5ff 0%, #ffffff 100%);">
+                        <h3>🤖 AI 智能生成（Function Calling）</h3>
+                        <p style="font-size:13px;color:#666;margin-bottom:12px;">直接描述需求，AI 会自动分析并生成测试用例保存到系统</p>
+                        <textarea class="requirement-input" id="smartRequirementText" placeholder="例如：&#10;实现用户登录功能，支持用户名密码登录，登录成功后跳转到首页，失败时显示错误提示" rows="4"></textarea>
+                        <div style="margin-top:8px;">
+                            <input type="text" id="smartExtraPrompt" placeholder="额外要求（可选），例如：请覆盖异常场景" style="width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;">
+                        </div>
+                        <div class="action-bar" style="margin-top:12px;">
+                            <button class="btn btn-primary" onclick="smartGenerate()" id="smartGenerateBtn">🚀 AI 智能生成</button>
+                            <span id="smartStatus" style="font-size:13px;color:#999;margin-left:10px;"></span>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <h3>📄 上传需求文档</h3>
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
@@ -621,6 +635,90 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // ========== AI 智能生成（Function Calling） ==========
+        async function smartGenerate() {
+            const requirement = document.getElementById('smartRequirementText').value.trim();
+            const extraPrompt = document.getElementById('smartExtraPrompt').value.trim();
+            
+            if (!requirement) {
+                alert('请输入需求描述');
+                return;
+            }
+            
+            const btn = document.getElementById('smartGenerateBtn');
+            const status = document.getElementById('smartStatus');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ AI 分析中...';
+            status.textContent = '正在调用 AI 分析需求并生成用例...';
+            status.style.color = '#667eea';
+            
+            try {
+                const res = await fetch('/api/llm/smart_generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        requirement: requirement,
+                        extra_prompt: extraPrompt
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    const result = data.data;
+                    
+                    // 显示结果
+                    let message = `✅ AI 智能生成完成！\n\n`;
+                    message += `工具调用次数: ${result.tool_calls_count}\n`;
+                    message += `成功: ${result.success_count}, 失败: ${result.failed_count}\n\n`;
+                    
+                    if (result.tool_results && result.tool_results.length > 0) {
+                        message += '生成的用例:\n';
+                        result.tool_results.forEach((toolResult, index) => {
+                            if (toolResult.success) {
+                                const toolName = toolResult.tool.includes('api') ? '接口用例' : 'UI用例';
+                                const caseName = toolResult.result.case_name || '未命名';
+                                message += `  ${index + 1}. ✅ ${toolName}: ${caseName}\n`;
+                            } else {
+                                message += `  ${index + 1}. ❌ 失败: ${toolResult.result.error || '未知错误'}\n`;
+                            }
+                        });
+                    }
+                    
+                    if (result.ai_content) {
+                        message += `\nAI 说明:\n${result.ai_content.substring(0, 300)}${result.ai_content.length > 300 ? '...' : ''}`;
+                    }
+                    
+                    alert(message);
+                    
+                    status.textContent = `✅ 成功生成 ${result.success_count} 个用例`;
+                    status.style.color = '#52c41a';
+                    
+                    // 清空输入框
+                    document.getElementById('smartRequirementText').value = '';
+                    document.getElementById('smartExtraPrompt').value = '';
+                    
+                } else {
+                    alert('生成失败: ' + data.message);
+                    status.textContent = '❌ 生成失败';
+                    status.style.color = '#ff4d4f';
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+                status.textContent = '❌ 请求失败';
+                status.style.color = '#ff4d4f';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 AI 智能生成';
+                
+                // 3秒后清除状态
+                setTimeout(() => {
+                    status.textContent = '';
+                }, 3000);
+            }
         }
     </script>
 </body>
