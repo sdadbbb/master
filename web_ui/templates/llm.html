@@ -202,6 +202,7 @@
                 <button class="tab active" onclick="switchTab('chat')">💬 对话</button>
                 <button class="tab" onclick="switchTab('generate')">📝 用例生成</button>
                 <button class="tab" onclick="switchTab('files')">📁 生成文件</button>
+                <button class="tab" onclick="switchTab('analysis')">🔍 分析建议</button>
             </div>
 
             <!-- 对话面板 -->
@@ -216,6 +217,7 @@
                 <div class="chat-input-area">
                     <textarea id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行..." rows="3"
                               onkeydown="handleChatKey(event)"></textarea>
+                    <button class="btn btn-success" onclick="sendChatAnalysisRequest()" id="chatAnalyzeBtn" style="white-space:nowrap;flex-shrink:0;margin-right:8px;">🔍 AI 分析</button>
                     <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn">发送</button>
                 </div>
             </div>
@@ -278,6 +280,58 @@
                     <div class="loading">加载中</div>
                 </div>
             </div>
+
+            <!-- 分析建议面板 -->
+            <div class="tab-panel" id="analysis-panel">
+                <div class="analysis-content" style="flex:1;overflow-y:auto;padding:20px;">
+                    <div class="card" style="text-align:center;border:2px solid #667eea;background:linear-gradient(135deg,#f0f5ff 0%,#ffffff 100%);">
+                        <h3>🔍 测试用例分析与建议</h3>
+                        <p style="font-size:13px;color:#666;margin-bottom:16px;">系统将自动收集所有测试用例和对应的测试执行结果，AI 会进行全面的质量评估并给出具体的改进建议</p>
+                        <button class="btn btn-primary" onclick="startAnalysis()" id="analyzeBtn" style="padding:14px 40px;font-size:16px;">
+                            🚀 一键分析所有测试用例
+                        </button>
+                        <div id="analyzeStatus" style="margin-top:12px;font-size:13px;color:#999;"></div>
+                    </div>
+
+                    <div id="analyzeResult" style="display:none;">
+                        <div class="card">
+                            <h3>📊 概览</h3>
+                            <div class="summary-cards" id="analysisOverviewCards"></div>
+                        </div>
+                        <div class="card">
+                            <h3>📝 用例质量分析</h3>
+                            <div class="analysis-box" id="caseQualityAnalysis"></div>
+                        </div>
+                        <div class="card">
+                            <h3>📈 执行结果分析</h3>
+                            <div class="analysis-box" id="executionAnalysis"></div>
+                        </div>
+                        <div class="card">
+                            <h3>🎯 覆盖情况分析</h3>
+                            <div class="analysis-box" id="coverageAnalysis"></div>
+                        </div>
+                        <div class="card">
+                            <h3>💡 改进建议</h3>
+                            <div id="suggestionsList"></div>
+                        </div>
+                        <div class="card">
+                            <h3>📋 总结</h3>
+                            <div class="analysis-box" id="analysisSummary"></div>
+                        </div>
+
+                        <!-- 被分析的用例列表 -->
+                        <div class="card" id="analyzedCasesCard" style="display:none;">
+                            <h3>📋 被分析的用例列表</h3>
+                            <div style="margin-bottom:12px;">
+                                <button class="btn btn-primary btn-small" onclick="switchCaseTab('api')" id="caseTabApiBtn">🔌 API 用例</button>
+                                <button class="btn btn-secondary btn-small" onclick="switchCaseTab('ui')" id="caseTabUiBtn">🎨 UI 用例</button>
+                            </div>
+                            <div id="apiCaseListPanel"></div>
+                            <div id="uiCaseListPanel" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -314,7 +368,7 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
             const tabs = document.querySelectorAll('.tab');
-            const tabIndex = { chat: 0, generate: 1, files: 2 };
+            const tabIndex = { chat: 0, generate: 1, files: 2, analysis: 3 };
             if (tabs[tabIndex[tab]]) tabs[tabIndex[tab]].classList.add('active');
             document.getElementById(tab + '-panel').classList.add('active');
             if (tab === 'files') loadFiles();
@@ -719,6 +773,212 @@
                     status.textContent = '';
                 }, 3000);
             }
+        }
+
+        // ========== 分析建议功能 ==========
+
+        /**
+         * 在对话中快速发起AI分析请求（使用支持工具调用的聊天端点）
+         */
+        async function sendChatAnalysisRequest() {
+            const message = '请帮我分析系统中现有的所有测试用例和最近的测试执行结果，给出全面的改进建议。';
+
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const chatAnalyzeBtn = document.getElementById('chatAnalyzeBtn');
+
+            input.value = '';
+            sendBtn.disabled = true;
+            chatAnalyzeBtn.disabled = true;
+
+            appendMessage('user', message);
+
+            try {
+                const res = await fetch('/api/llm/chat_with_tools', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId, message })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentSessionId = data.data.session_id;
+                    let reply = data.data.reply;
+                    // 如果调用了工具，添加分析提示
+                    if (data.data.tool_calls && data.data.tool_calls.length > 0) {
+                        const toolNames = data.data.tool_calls.map(t => t.tool).join('、');
+                        reply = '📊 **已分析以下数据：** ' + toolNames + '\n\n---\n\n' + reply;
+                    }
+                    appendMessage('assistant', reply);
+                    loadSessions();
+                } else {
+                    appendMessage('assistant', '❌ ' + data.message);
+                }
+            } catch (e) {
+                appendMessage('assistant', '❌ 请求失败: ' + e.message);
+            } finally {
+                sendBtn.disabled = false;
+                chatAnalyzeBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        /**
+         * 一键分析所有测试用例和测试执行结果
+         */
+        async function startAnalysis() {
+            const btn = document.getElementById('analyzeBtn');
+            const status = document.getElementById('analyzeStatus');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中，请耐心等待...';
+            status.textContent = '正在收集测试数据并调用 AI 进行分析...';
+            status.style.color = '#667eea';
+
+            // 切换到分析建议标签页
+            switchTab('analysis');
+
+            try {
+                const res = await fetch('/api/llm/analyze', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.success) {
+                    renderAnalysisResult(data.data);
+                    status.textContent = '✅ 分析完成 (' + (data.data.api_cases.length + data.data.ui_cases.length) + ' 个用例)';
+                    status.style.color = '#52c41a';
+                } else {
+                    status.textContent = '❌ ' + data.message;
+                    status.style.color = '#ff4d4f';
+                }
+            } catch (e) {
+                status.textContent = '❌ 请求失败: ' + e.message;
+                status.style.color = '#ff4d4f';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 一键分析所有测试用例';
+            }
+        }
+
+        /**
+         * 渲染分析结果
+         */
+        function renderAnalysisResult(data) {
+            document.getElementById('analyzeResult').style.display = 'block';
+
+            // data 结构: { analysis: {...}, api_cases: [...], ui_cases: [...] }
+            const analysis = data.analysis || data;
+            const api_cases = data.api_cases || [];
+            const ui_cases = data.ui_cases || [];
+
+            // 概览卡片
+            const overview = analysis.overview || {};
+            document.getElementById('analysisOverviewCards').innerHTML = `
+                <div class="summary-card"><div class="num">${overview.api_case_count || 0}</div><div class="label">API用例</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#52c41a,#73d13d)"><div class="num">${overview.ui_case_count || 0}</div><div class="label">UI用例</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#faad14,#ffc53d)"><div class="num">${overview.api_execution_count || 0}</div><div class="label">API执行次数</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#ff4d4f,#ff7875)"><div class="num">${overview.ui_execution_count || 0}</div><div class="label">UI执行次数</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#722ed1,#b37feb)"><div class="num">${overview.api_pass_rate || 'N/A'}</div><div class="label">API通过率</div></div>
+                <div class="summary-card" style="background:linear-gradient(135deg,#1890ff,#69c0ff)"><div class="num">${overview.ui_pass_rate || 'N/A'}</div><div class="label">UI通过率</div></div>
+            `;
+
+            // Markdown 内容显示
+            document.getElementById('caseQualityAnalysis').textContent = analysis.case_quality_analysis || '暂无分析';
+            document.getElementById('executionAnalysis').textContent = analysis.execution_analysis || '暂无分析';
+            document.getElementById('coverageAnalysis').textContent = analysis.coverage_analysis || '暂无分析';
+            document.getElementById('analysisSummary').textContent = analysis.summary || '暂无总结';
+
+            // 建议列表
+            const suggestions = analysis.suggestions || [];
+            const suggestionsContainer = document.getElementById('suggestionsList');
+            if (suggestions.length === 0) {
+                suggestionsContainer.innerHTML = '<p style="color:#999;">暂无建议</p>';
+            } else {
+                suggestionsContainer.innerHTML = suggestions.map((s, i) => `
+                    <div style="padding:12px 16px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span class="badge badge-${s.priority === '高' ? 'high' : 'mid'}">${s.priority || '中'}</span>
+                            <span style="font-size:12px;color:#666;">${s.category || '其他'}</span>
+                        </div>
+                        <div style="font-size:14px;line-height:1.6;">${escapeHtml(s.content || '')}</div>
+                    </div>
+                `).join('');
+            }
+
+            // 用例列表
+            renderCaseLists(api_cases, ui_cases);
+
+            // 滚动到结果区域
+            document.getElementById('analyzeResult').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * 渲染被分析的用例列表
+         */
+        function renderCaseLists(api_cases, ui_cases) {
+            if (api_cases.length === 0 && ui_cases.length === 0) return;
+
+            document.getElementById('analyzedCasesCard').style.display = 'block';
+
+            // API 用例表格
+            if (api_cases.length > 0) {
+                document.getElementById('apiCaseListPanel').innerHTML = `
+                    <p style="font-size:13px;color:#666;margin-bottom:8px;">共 ${api_cases.length} 个 API 测试用例</p>
+                    <table class="case-table">
+                        <tr>
+                            <th>名称</th>
+                            <th>方法</th>
+                            <th>URL</th>
+                            <th>描述</th>
+                        </tr>
+                        ${api_cases.map(c => `
+                            <tr>
+                                <td style="font-weight:500;">${escapeHtml(c.name || '未命名')}</td>
+                                <td><span class="badge badge-api">${escapeHtml(c.method || 'GET')}</span></td>
+                                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.url || '')}">${escapeHtml(c.url || '-')}</td>
+                                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.description || '')}">${escapeHtml(c.description || '-')}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            } else {
+                document.getElementById('apiCaseListPanel').innerHTML = '<p style="color:#999;padding:12px;">暂无 API 测试用例</p>';
+            }
+
+            // UI 用例表格
+            if (ui_cases.length > 0) {
+                document.getElementById('uiCaseListPanel').innerHTML = `
+                    <p style="font-size:13px;color:#666;margin-bottom:8px;">共 ${ui_cases.length} 个 UI 测试用例</p>
+                    <table class="case-table">
+                        <tr>
+                            <th>名称</th>
+                            <th>起始URL</th>
+                            <th>步骤数</th>
+                            <th>描述</th>
+                        </tr>
+                        ${ui_cases.map(c => `
+                            <tr>
+                                <td style="font-weight:500;">${escapeHtml(c.name || '未命名')}</td>
+                                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.url || '')}">${escapeHtml(c.url || '-')}</td>
+                                <td>${c.steps_count || 0}</td>
+                                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.description || '')}">${escapeHtml(c.description || '-')}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            } else {
+                document.getElementById('uiCaseListPanel').innerHTML = '<p style="color:#999;padding:12px;">暂无 UI 测试用例</p>';
+            }
+        }
+
+        /**
+         * 切换用例列表的子标签
+         */
+        let currentCaseTab = 'api';
+        function switchCaseTab(tab) {
+            currentCaseTab = tab;
+            document.getElementById('apiCaseListPanel').style.display = tab === 'api' ? 'block' : 'none';
+            document.getElementById('uiCaseListPanel').style.display = tab === 'ui' ? 'block' : 'none';
+            document.getElementById('caseTabApiBtn').className = tab === 'api' ? 'btn btn-primary btn-small' : 'btn btn-secondary btn-small';
+            document.getElementById('caseTabUiBtn').className = tab === 'ui' ? 'btn btn-primary btn-small' : 'btn btn-secondary btn-small';
         }
     </script>
 </body>

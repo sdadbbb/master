@@ -8,10 +8,11 @@ from page.llmClient import LLMClient
 from page.llmChatManager import LLMChatManager
 from page.llmCaseGenerator import LLMCaseGenerator
 from page.llmXlsxManager import LLMXlsxManager
-from page.llmTools import TOOLS_SPEC, get_tool_executor
+from page.llmTools import TOOLS_SPEC, ANALYSIS_TOOLS_SPEC, get_tool_executor, api_manager, ui_manager
 from page.api_page import ApiTester
 from page.uiTestExecutor import UITestExecutor
 from page.apiTestReusltManager import ApiTestResultManager
+from page.uiTestResultManager import UITestResultManager
 from datetime import datetime
 
 llm_bp = Blueprint('llm', __name__)
@@ -20,6 +21,54 @@ chat_manager = LLMChatManager()
 case_generator = LLMCaseGenerator()
 xlsx_manager = LLMXlsxManager()
 api_result_manager = ApiTestResultManager()
+ui_result_manager = UITestResultManager()
+
+# 增强对话系统提示词（支持工具调用分析）
+ENHANCED_CHAT_SYSTEM_PROMPT = """你是一名专业的软件测试工程师助手，擅长测试用例设计、需求分析、自动化测试和测试质量分析。请用中文回答。
+
+你可以使用以下工具来帮助分析现有的测试用例和执行结果：
+1. get_api_test_cases - 获取所有API测试用例
+2. get_ui_test_cases - 获取所有UI测试用例
+3. get_api_test_results - 获取最近的API测试结果
+4. get_ui_test_results - 获取最近的UI测试结果
+5. get_test_result_detail - 获取指定任务的详细执行结果
+
+当用户询问关于现有测试用例分析、测试结果回顾、改进建议等问题时，请主动使用这些工具来获取数据进行分析。
+
+注意：
+- 调用工具后，系统会返回数据结果，请基于返回的数据进行分析
+- 分析时要考虑用例的完整性、执行通过率、覆盖场景等
+- 给出具体、可操作的建议"""
+
+# 一键分析系统提示词
+ANALYSIS_SYSTEM_PROMPT = """你是一名资深的测试架构师，擅长分析测试用例质量、测试执行情况和测试覆盖率。
+请根据提供的测试用例数据和测试执行结果，进行全面的质量分析。
+
+请输出严格的 JSON 格式结果，不要输出任何 JSON 以外的内容。
+
+输出 JSON 结构如下：
+{
+    "overview": {
+        "api_case_count": 0,
+        "ui_case_count": 0,
+        "api_execution_count": 0,
+        "ui_execution_count": 0,
+        "api_pass_rate": "0%",
+        "ui_pass_rate": "0%"
+    },
+    "case_quality_analysis": "用例质量分析（Markdown格式）",
+    "execution_analysis": "执行结果分析（Markdown格式）",
+    "coverage_analysis": "覆盖情况分析（Markdown格式）",
+    "suggestions": [
+        {
+            "category": "用例改进/场景补充/执行优化/其他",
+            "priority": "高/中/低",
+            "content": "具体建议内容"
+        }
+    ],
+    "summary": "总结（Markdown格式）"
+}
+"""
 
 ALLOWED_EXTENSIONS = {'txt', 'md', 'docx', 'doc', 'json', 'yaml', 'yml'}
 
@@ -152,6 +201,125 @@ def chat():
                 'reply': reply
             }
         })
+    except Exception as e:
+        logger.error(f"对话失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== 增强对话API（支持工具调用分析）====================
+
+@llm_bp.route('/api/llm/chat_with_tools', methods=['POST'])
+def chat_with_tools():
+    """与大模型对话（支持Function Calling，可主动获取测试数据进行分析）"""
+    try:
+        data = request.json
+        session_id = data.get('session_id')
+        message = data.get('message', '').strip()
+
+        if not message:
+            return jsonify({'success': False, 'message': '消息不能为空'}), 400
+
+        if not session_id:
+            session = chat_manager.create_session()
+            session_id = session['session_id']
+
+        chat_manager.add_message(session_id, 'user', message)
+
+        session = chat_manager.get_session(session_id)
+        llm_messages = [
+            {'role': 'system', 'content': ENHANCED_CHAT_SYSTEM_PROMPT}
+        ]
+        for msg in session['messages']:
+            role = msg['role']
+            content = msg['content']
+            # 跳过可能带tool_calls的消息（简化为纯文本消息）
+            if role in ('user', 'assistant'):
+                llm_messages.append({'role': role, 'content': content})
+
+        client = LLMClient()
+
+        # 第一轮：调用LLM可能返回工具调用
+        result = client.chat_with_tools(llm_messages, tools=ANALYSIS_TOOLS_SPEC)
+
+        tool_call_results = []
+
+        # 如果AI决定调用工具
+        if result['tool_calls']:
+            logger.info(f"AI 请求调用 {len(result['tool_calls'])} 个工具进行分析")
+
+            # 将AI的tool_calls消息加入历史
+            assistant_msg = {
+                'role': 'assistant',
+                'content': result.get('content'),
+                'tool_calls': [
+                    {
+                        'id': tc['id'],
+                        'type': 'function',
+                        'function': {
+                            'name': tc['function']['name'],
+                            'arguments': tc['function']['arguments']
+                        }
+                    }
+                    for tc in result['tool_calls']
+                ]
+            }
+            llm_messages.append(assistant_msg)
+
+            for tool_call in result['tool_calls']:
+                func_name = tool_call['function']['name']
+                args = json.loads(tool_call['function']['arguments'])
+
+                logger.info(f"执行工具调用: {func_name}")
+
+                executor = get_tool_executor(func_name)
+                if executor:
+                    exec_result = executor(args)
+                    tool_call_results.append({
+                        'tool': func_name,
+                        'success': exec_result.get('success', False),
+                        'result': exec_result
+                    })
+                    # 将工具执行结果加入消息历史
+                    llm_messages.append({
+                        'role': 'tool',
+                        'tool_call_id': tool_call['id'],
+                        'content': json.dumps(exec_result, ensure_ascii=False)
+                    })
+                else:
+                    logger.warning(f"未找到工具执行器: {func_name}")
+                    tool_call_results.append({
+                        'tool': func_name,
+                        'success': False,
+                        'error': f'未知工具: {func_name}'
+                    })
+
+            # 第二轮：将工具结果传给LLM，获取最终分析回复
+            logger.info("将工具结果传回LLM，获取最终分析回复...")
+            final_content = client.chat(llm_messages)
+            chat_manager.add_message(session_id, 'assistant', final_content)
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'session_id': session_id,
+                    'reply': final_content,
+                    'tool_calls': tool_call_results
+                }
+            })
+        else:
+            # 没有工具调用，直接返回文本回复
+            reply = result.get('content', '')
+            chat_manager.add_message(session_id, 'assistant', reply)
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'session_id': session_id,
+                    'reply': reply,
+                    'tool_calls': []
+                }
+            })
+
     except Exception as e:
         logger.error(f"对话失败: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -456,6 +624,144 @@ def smart_generate():
         
     except Exception as e:
         logger.error(f"AI 智能生成失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== 测试用例分析与建议 ====================
+
+@llm_bp.route('/api/llm/analyze', methods=['POST'])
+def analyze_test_cases():
+    """
+    一键分析系统中的所有测试用例和测试执行结果
+    自动收集所有数据并让AI进行全面分析，返回结构化建议
+    """
+    try:
+        logger.info("开始全面分析测试用例和测试结果...")
+
+        # 1. 收集所有测试数据
+        api_tests = api_manager.get_all_tests()
+        ui_cases = ui_manager.get_all_cases()
+
+        api_results_list, api_results_total = api_result_manager.list_results(page=1, per_page=20)
+        ui_results_list, ui_results_total = ui_result_manager.list_results(page=1, per_page=20)
+
+        # 2. 加载最近的详细结果
+        latest_api_detail = None
+        if api_results_list:
+            latest_api_task = api_results_list[0].get('task_id', '')
+            if latest_api_task:
+                latest_api_detail = api_result_manager.get_result(latest_api_task)
+
+        latest_ui_detail = None
+        if ui_results_list:
+            latest_ui_task = ui_results_list[0].get('task_id', '')
+            if latest_ui_task:
+                latest_ui_detail = ui_result_manager.get_result(latest_ui_task)
+
+        # 3. 构建上下文
+        context = {
+            'api_test_cases': [
+                {
+                    'name': t.get('name', ''),
+                    'description': t.get('description', ''),
+                    'method': t.get('request', {}).get('method', ''),
+                    'url': t.get('request', {}).get('url', ''),
+                    'assert_rules': t.get('assert', {})
+                } for t in api_tests
+            ],
+            'ui_test_cases': [
+                {
+                    'name': c.get('name', ''),
+                    'description': c.get('description', ''),
+                    'url': c.get('url', ''),
+                    'steps_count': len(c.get('steps', [])),
+                    'steps_summary': [s.get('action', '') for s in c.get('steps', [])]
+                } for c in ui_cases
+            ],
+            'api_execution_history': [
+                {
+                    'task_id': r.get('task_id', ''),
+                    'total': r.get('total', 0),
+                    'passed': r.get('passed', 0),
+                    'failed': r.get('failed', 0),
+                    'executed_at': r.get('executed_at', ''),
+                    'test_names': r.get('test_names', [])
+                } for r in api_results_list
+            ],
+            'ui_execution_history': [
+                {
+                    'task_id': r.get('task_id', ''),
+                    'total': r.get('total', 0),
+                    'passed': r.get('passed', 0),
+                    'failed': r.get('failed', 0),
+                    'executed_at': r.get('executed_at', ''),
+                    'case_names': r.get('case_names', [])
+                } for r in ui_results_list
+            ],
+            'latest_api_detail': latest_api_detail,
+            'latest_ui_detail': latest_ui_detail
+        }
+
+        context_json = json.dumps(context, ensure_ascii=False, indent=2)
+        logger.info(f"分析数据已收集: API用例={len(api_tests)}, UI用例={len(ui_cases)}, "
+                    f"API执行记录={api_results_total}, UI执行记录={ui_results_total}")
+
+        # 4. 调用LLM进行分析
+        user_prompt = f"""请对以下测试用例和测试执行数据进行全面分析，给出详细的改进建议。
+
+分析数据：
+{context_json}"""
+
+        messages = [
+            {'role': 'system', 'content': ANALYSIS_SYSTEM_PROMPT},
+            {'role': 'user', 'content': user_prompt}
+        ]
+
+        client = LLMClient()
+        response = client.chat(messages)
+
+        # 5. 解析JSON结果
+        result = LLMClient.extract_json(response)
+
+        logger.info("分析完成")
+
+        # 6. 将原始用例数据也一并返回，方便前端展示
+        api_case_list = [
+            {
+                'name': t.get('name', ''),
+                'description': t.get('description', ''),
+                'method': t.get('request', {}).get('method', ''),
+                'url': t.get('request', {}).get('url', ''),
+                'id': t.get('id', ''),
+                'created_at': t.get('created_at', ''),
+                'updated_at': t.get('updated_at', '')
+            } for t in api_tests
+        ]
+        ui_case_list = [
+            {
+                'name': c.get('name', ''),
+                'description': c.get('description', ''),
+                'url': c.get('url', ''),
+                'steps_count': len(c.get('steps', [])),
+                'id': c.get('id', ''),
+                'created_at': c.get('created_at', ''),
+                'updated_at': c.get('updated_at', '')
+            } for c in ui_cases
+        ]
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'analysis': result,
+                'api_cases': api_case_list,
+                'ui_cases': ui_case_list
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"分析失败: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
