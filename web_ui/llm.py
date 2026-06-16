@@ -14,6 +14,7 @@ from page.uiTestExecutor import UITestExecutor
 from page.apiTestReusltManager import ApiTestResultManager
 from page.uiTestResultManager import UITestResultManager
 from datetime import datetime
+from util.file_util import FileUtil
 
 llm_bp = Blueprint('llm', __name__)
 
@@ -764,4 +765,358 @@ def analyze_test_cases():
         logger.error(f"分析失败: {str(e)}")
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== AI 选择用例分析功能 ====================
+
+class LLMAnalysisResultManager:
+    """管理AI分析结果的存储和读取"""
+
+    def __init__(self):
+        self.analysis_dir = os.path.join(FileUtil.get_project_root(), 'reports', 'llm_analysis')
+        os.makedirs(self.analysis_dir, exist_ok=True)
+
+    def list_results(self):
+        """列出所有分析结果文件"""
+        try:
+            files = []
+            for f in sorted(os.listdir(self.analysis_dir), reverse=True):
+                if f.endswith('.json'):
+                    filepath = os.path.join(self.analysis_dir, f)
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as fh:
+                            data = json.load(fh)
+                        files.append({
+                            'filename': f,
+                            'analysis_name': data.get('analysis_name', f),
+                            'created_at': data.get('created_at', ''),
+                            'api_case_count': len(data.get('api_cases', [])),
+                            'ui_case_count': len(data.get('ui_cases', []))
+                        })
+                    except Exception:
+                        files.append({
+                            'filename': f,
+                            'analysis_name': f,
+                            'created_at': '',
+                            'api_case_count': 0,
+                            'ui_case_count': 0
+                        })
+            return files
+        except Exception as e:
+            logger.error(f"获取分析结果列表失败: {str(e)}")
+            return []
+
+    def get_result(self, filename):
+        """获取单个分析结果详情"""
+        filepath = os.path.join(self.analysis_dir, filename)
+        if not os.path.exists(filepath):
+            return None
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"读取分析结果失败: {str(e)}")
+            return None
+
+    def save_result(self, analysis_name, api_cases, ui_cases, extra_prompt, analysis_content, analysis_json):
+        """保存分析结果"""
+        now = datetime.now()
+        filename = f"analysis_{now.strftime('%Y%m%d_%H%M%S')}.json"
+        data = {
+            'analysis_name': analysis_name,
+            'created_at': now.strftime('%Y-%m-%d %H:%M:%S'),
+            'extra_prompt': extra_prompt,
+            'api_cases': api_cases,
+            'ui_cases': ui_cases,
+            'analysis_content': analysis_content,
+            'analysis_json': analysis_json
+        }
+        filepath = os.path.join(self.analysis_dir, filename)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return filename
+
+    def delete_result(self, filename):
+        """删除分析结果"""
+        filepath = os.path.join(self.analysis_dir, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            return True
+        return False
+
+
+analysis_result_manager = LLMAnalysisResultManager()
+
+
+@llm_bp.route('/api/llm/all_cases', methods=['GET'])
+def get_all_cases():
+    """获取所有测试用例（API + UI），用于前端展示和选择"""
+    try:
+        api_tests = api_manager.get_all_tests()
+        ui_cases = ui_manager.get_all_cases()
+
+        api_case_list = [
+            {
+                'id': t.get('id', ''),
+                'type': 'api',
+                'name': t.get('name', ''),
+                'description': t.get('description', ''),
+                'method': t.get('request', {}).get('method', 'GET'),
+                'url': t.get('request', {}).get('url', ''),
+                'created_at': t.get('created_at', ''),
+                'updated_at': t.get('updated_at', '')
+            } for t in api_tests
+        ]
+        ui_case_list = [
+            {
+                'id': c.get('id', ''),
+                'type': 'ui',
+                'name': c.get('name', ''),
+                'description': c.get('description', ''),
+                'url': c.get('url', ''),
+                'steps_count': len(c.get('steps', [])),
+                'created_at': c.get('created_at', ''),
+                'updated_at': c.get('updated_at', '')
+            } for c in ui_cases
+        ]
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'api_cases': api_case_list,
+                'ui_cases': ui_case_list,
+                'api_count': len(api_case_list),
+                'ui_count': len(ui_case_list),
+                'total': len(api_case_list) + len(ui_case_list)
+            }
+        })
+    except Exception as e:
+        logger.error(f"获取测试用例失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/analyze_cases', methods=['POST'])
+def analyze_selected_cases():
+    """
+    分析指定的测试用例，支持额外对话提示
+    """
+    try:
+        data = request.json or {}
+        case_ids = data.get('case_ids', [])
+        extra_prompt = data.get('extra_prompt', '').strip()
+        analysis_name = data.get('analysis_name', '').strip()
+
+        if not case_ids:
+            return jsonify({'success': False, 'message': '请选择至少一个测试用例'}), 400
+
+        # 1. 查询选中的用例详情
+        all_api_tests = api_manager.get_all_tests()
+        all_ui_cases = ui_manager.get_all_cases()
+
+        selected_api = []
+        selected_ui = []
+        for cid in case_ids:
+            # 可能是 api 用例
+            found = False
+            for t in all_api_tests:
+                if t.get('id') == cid:
+                    selected_api.append({
+                        'name': t.get('name', ''),
+                        'description': t.get('description', ''),
+                        'method': t.get('request', {}).get('method', 'GET'),
+                        'url': t.get('request', {}).get('url', ''),
+                        'headers': t.get('request', {}).get('headers', {}),
+                        'data': t.get('request', {}).get('data', {}),
+                        'assert_rules': t.get('assert', {})
+                    })
+                    found = True
+                    break
+            if not found:
+                for c in all_ui_cases:
+                    if c.get('id') == cid:
+                        selected_ui.append({
+                            'name': c.get('name', ''),
+                            'description': c.get('description', ''),
+                            'url': c.get('url', ''),
+                            'steps_count': len(c.get('steps', [])),
+                            'steps_summary': [s.get('action', '') for s in c.get('steps', [])]
+                        })
+                        break
+
+        # 2. 构建分析提示
+        analysis_system_prompt = """你是一名资深的测试架构师，擅长分析测试用例的质量和合理性。
+请根据提供的测试用例数据，进行全面的质量分析。
+
+请分析以下方面：
+1. 用例设计是否合理
+2. 覆盖的测试场景是否全面
+3. 是否存在遗漏的重要场景
+4. 用例的质量和改进建议
+5. 整体评估
+
+请输出严格的 JSON 格式结果，不要输出任何 JSON 以外的内容。
+
+输出 JSON 结构如下：
+{
+    "overall_assessment": "整体评估（如：优秀/良好/一般/需改进）",
+    "case_count": 0,
+    "analysis_details": "详细分析内容（Markdown格式，逐条分析每个用例）",
+    "issues_found": [
+        {
+            "case_name": "用例名称",
+            "issue": "发现的问题",
+            "suggestion": "改进建议"
+        }
+    ],
+    "coverage_analysis": "覆盖情况分析（Markdown格式）",
+    "suggestions": [
+        {
+            "category": "场景补充/用例改进/其他",
+            "priority": "高/中/低",
+            "content": "具体建议内容"
+        }
+    ],
+    "summary": "总结（Markdown格式）"
+}"""
+
+        context = {
+            'api_test_cases': selected_api,
+            'ui_test_cases': selected_ui
+        }
+        context_json = json.dumps(context, ensure_ascii=False, indent=2)
+
+        user_prompt = f"""请对以下选中的测试用例进行分析：
+
+分析数据：
+{context_json}"""
+
+        if extra_prompt:
+            user_prompt += f"\n\n附加分析要求：\n{extra_prompt}"
+
+        # 3. 调用LLM分析
+        messages = [
+            {'role': 'system', 'content': analysis_system_prompt},
+            {'role': 'user', 'content': user_prompt}
+        ]
+
+        client = LLMClient()
+        response = client.chat(messages)
+
+        # 4. 解析JSON结果
+        try:
+            analysis_json = LLMClient.extract_json(response)
+        except Exception:
+            analysis_json = None
+
+        # 5. 自动生成分析名称
+        if not analysis_name:
+            existing = analysis_result_manager.list_results()
+            nth = len(existing) + 1
+            today = datetime.now().strftime('%Y%m%d')
+            analysis_name = f"{today}_第{nth}次分析"
+
+        # 6. 转换选中用例为前端格式保存
+        api_cases_save = [
+            {
+                'id': t.get('id', ''),
+                'name': t.get('name', ''),
+                'description': t.get('description', ''),
+                'method': t.get('request', {}).get('method', 'GET'),
+                'url': t.get('request', {}).get('url', '')
+            }
+            for t in all_api_tests
+            for cid in case_ids
+            if t.get('id') == cid
+        ]
+        ui_cases_save = [
+            {
+                'id': c.get('id', ''),
+                'name': c.get('name', ''),
+                'description': c.get('description', ''),
+                'url': c.get('url', ''),
+                'steps_count': len(c.get('steps', []))
+            }
+            for c in all_ui_cases
+            for cid in case_ids
+            if c.get('id') == cid
+        ]
+
+        # 7. 保存分析结果
+        filename = analysis_result_manager.save_result(
+            analysis_name=analysis_name,
+            api_cases=api_cases_save,
+            ui_cases=ui_cases_save,
+            extra_prompt=extra_prompt,
+            analysis_content=response,
+            analysis_json=analysis_json
+        )
+
+        logger.info(f"用例分析完成: {analysis_name}, 分析API用例={len(selected_api)}, UI用例={len(selected_ui)}")
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'analysis_name': analysis_name,
+                'filename': filename,
+                'analysis_content': response,
+                'analysis_json': analysis_json,
+                'api_cases': api_cases_save,
+                'ui_cases': ui_cases_save,
+                'api_count': len(selected_api),
+                'ui_count': len(selected_ui)
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"分析用例失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/analysis_results', methods=['GET'])
+def list_analysis_results():
+    """获取所有分析结果列表"""
+    try:
+        results = analysis_result_manager.list_results()
+        return jsonify({
+            'success': True,
+            'data': results,
+            'total': len(results)
+        })
+    except Exception as e:
+        logger.error(f"获取分析结果列表失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/analysis_results/<filename>', methods=['GET'])
+def get_analysis_result(filename):
+    """获取单个分析结果详情"""
+    try:
+        # 防止路径穿越
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({'success': False, 'message': '无效的文件名'}), 400
+
+        result = analysis_result_manager.get_result(filename)
+        if result:
+            return jsonify({'success': True, 'data': result})
+        return jsonify({'success': False, 'message': '分析结果不存在'}), 404
+    except Exception as e:
+        logger.error(f"获取分析结果失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/analysis_results/<filename>', methods=['DELETE'])
+def delete_analysis_result(filename):
+    """删除分析结果"""
+    try:
+        if '..' in filename or '/' in filename or '\\' in filename:
+            return jsonify({'success': False, 'message': '无效的文件名'}), 400
+
+        if analysis_result_manager.delete_result(filename):
+            return jsonify({'success': True, 'message': '删除成功'})
+        return jsonify({'success': False, 'message': '分析结果不存在'}), 404
+    except Exception as e:
+        logger.error(f"删除分析结果失败: {str(e)}")
         return jsonify({'success': False, 'message': str(e)}), 500

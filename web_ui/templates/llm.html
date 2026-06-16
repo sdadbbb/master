@@ -174,6 +174,603 @@
         .summary-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 16px; border-radius: 8px; text-align: center; }
         .summary-card .num { font-size: 28px; font-weight: 700; }
         .summary-card .label { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+
+        /* ============================================
+           用例分析面板 — 全新现代风格
+           ============================================ */
+
+        .analysis-split {
+            display: flex; flex: 1; overflow: hidden; gap: 0;
+            background: #f5f6fa;
+        }
+
+        /* --- 左侧面板 --- */
+        .analysis-left {
+            width: 360px; min-width: 360px;
+            display: flex; flex-direction: column;
+            background: #fff;
+            border-right: 1px solid #e8ecf1;
+        }
+
+        .analysis-left-inner {
+            flex: 1; overflow-y: auto; padding: 16px;
+        }
+
+        /* 面板头部横幅 */
+        .analysis-header-banner {
+            background: linear-gradient(135deg, #4f6ef7 0%, #7c5cbf 100%);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .analysis-header-banner::after {
+            content: '';
+            position: absolute;
+            right: -20px; top: -20px;
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+        .analysis-header-banner h2 {
+            font-size: 16px; font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+        .analysis-header-banner p {
+            font-size: 12px; opacity: 0.85;
+            margin: 0;
+        }
+
+        /* --- 切换标签（胶囊样式） --- */
+        .case-tab-group {
+            display: flex; gap: 6px;
+            margin-bottom: 12px;
+        }
+        .case-tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e0e4ea;
+            border-radius: 8px;
+            background: #fff;
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+            font-family: inherit;
+        }
+        .case-tab-btn:hover {
+            border-color: #a5b4fc;
+            color: #4f6ef7;
+        }
+        .case-tab-btn.active {
+            background: #4f6ef7;
+            border-color: #4f6ef7;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(79,110,247,0.3);
+        }
+
+        /* --- 用例列表区域 --- */
+        .case-list-container {
+            background: #f8f9fc;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+        .case-list-scroll {
+            max-height: 280px; overflow-y: auto;
+        }
+        .case-list-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .case-list-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        /* 全选栏 */
+        .select-all-bar {
+            display: flex; align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            font-size: 13px; color: #6b7280;
+            border-bottom: 1px solid #e8ecf1;
+            margin: 0 4px 4px 4px;
+        }
+        .select-all-bar .sel-count {
+            margin-left: auto;
+            color: #4f6ef7;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        /* 复选框（自定义样式） */
+        .case-checkbox {
+            width: 16px; height: 16px;
+            cursor: pointer;
+            accent-color: #4f6ef7;
+            flex-shrink: 0;
+        }
+        .case-checkbox-wrapper {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+        .case-checkbox-wrapper:hover {
+            background: #f0f2ff;
+            border-color: #e0e4ff;
+        }
+        .case-checkbox-wrapper.selected {
+            background: #eef0ff;
+            border-color: #c7d2fe;
+        }
+        .case-checkbox-wrapper .case-label {
+            flex: 1;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        .case-checkbox-wrapper .case-name-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .case-checkbox-wrapper .case-meta {
+            font-size: 11px;
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+
+        /* 标签 */
+        .tag-type {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            line-height: 1.6;
+        }
+        .tag-type-api {
+            background: #eef2ff;
+            color: #4f6ef7;
+        }
+        .tag-type-ui {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        /* --- 分析设置区域 --- */
+        .settings-card {
+            background: #f8f9fc;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        .settings-card .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .settings-card .field-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e0e4ea;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        .settings-card .field-input:focus {
+            outline: none;
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+        }
+        .settings-card .field-textarea {
+            resize: vertical;
+            min-height: 56px;
+            font-family: inherit;
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #e0e4ea;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        .settings-card .field-textarea:focus {
+            outline: none;
+            border-color: #4f6ef7;
+            box-shadow: 0 0 0 3px rgba(79,110,247,0.12);
+        }
+
+        /* 启动分析按钮 */
+        .analyze-btn-primary {
+            width: 100%;
+            padding: 11px 16px;
+            background: linear-gradient(135deg, #4f6ef7 0%, #7c5cbf 100%);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 14px rgba(79,110,247,0.3);
+        }
+        .analyze-btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(79,110,247,0.4);
+        }
+        .analyze-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .analyze-btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .analyze-progress {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+            display: none;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            background: #f0f2ff;
+        }
+
+        /* --- 历史记录区域 --- */
+        .history-section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .history-section-title h3 {
+            font-size: 14px; font-weight: 600;
+            color: #374151;
+            margin: 0;
+        }
+        .history-section-title .refresh-btn {
+            background: none;
+            border: 1px solid #e0e4ea;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .history-section-title .refresh-btn:hover {
+            border-color: #4f6ef7;
+            color: #4f6ef7;
+            background: #f0f2ff;
+        }
+
+        .history-list {
+            max-height: 260px; overflow-y: auto;
+        }
+        .history-list::-webkit-scrollbar {
+            width: 3px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+
+        .history-item {
+            display: flex; align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1px solid #f0f2f5;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            border-color: #c7d2fe;
+            background: #f8f9ff;
+        }
+        .history-item .h-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: #f0f2ff;
+            flex-shrink: 0;
+        }
+        .history-item .h-info {
+            flex: 1; min-width: 0;
+        }
+        .history-item .h-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-item .h-meta {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        .history-item .h-del {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .history-item:hover .h-del {
+            opacity: 1;
+        }
+        .history-item .h-del:hover {
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+        /* --- 右侧面板 --- */
+        .analysis-right {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            background: #f5f6fa;
+            display: flex;
+            flex-direction: column;
+        }
+        .analysis-right > #analysisResultPlaceholder {
+            flex: 1;
+        }
+        .analysis-right > #analysisResultContent {
+            flex: 1;
+        }
+        .analysis-right::-webkit-scrollbar {
+            width: 5px;
+        }
+        .analysis-right::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        /* 右侧占位提示 */
+        .result-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 400px;
+            color: #9ca3af;
+            text-align: center;
+        }
+        .result-placeholder .ph-icon {
+            width: 80px; height: 80px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #eef2ff 0%, #f0f0ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+        .result-placeholder h3 {
+            font-size: 16px;
+            color: #6b7280;
+            margin: 0 0 6px 0;
+            font-weight: 500;
+        }
+        .result-placeholder p {
+            font-size: 13px;
+            color: #9ca3af;
+            margin: 0;
+        }
+
+        /* --- 结果展示 --- */
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e8ecf1;
+        }
+        .result-header .rh-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0;
+        }
+        .result-header .rh-time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .result-header .rh-close-btn {
+            background: none;
+            border: 1px solid #e0e4ea;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: #6b7280;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        .result-header .rh-close-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            color: #374151;
+        }
+
+        /* 概览迷你卡片 */
+        .overview-mini-cards {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .overview-mini-card {
+            flex: 1;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid #f0f2f5;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .overview-mini-card .omc-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4f6ef7;
+        }
+        .overview-mini-card .omc-label {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        /* 内容区块卡片 */
+        .result-block {
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            border: 1px solid #f0f2f5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .result-block .rb-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin: 0 0 10px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .result-block .rb-content {
+            font-size: 13px;
+            line-height: 1.8;
+            color: #4b5563;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* 问题卡片 */
+        .issue-card {
+            padding: 12px 14px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .issue-card .ic-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #dc2626;
+        }
+        .issue-card .ic-detail {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+        .issue-card .ic-suggest {
+            font-size: 13px;
+            color: #059669;
+            margin-top: 4px;
+            line-height: 1.6;
+        }
+
+        /* 建议卡片 */
+        .sug-card {
+            padding: 12px 14px;
+            border: 1px solid #e8ecf1;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #fff;
+        }
+        .sug-card .sc-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .sug-card .sc-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #4b5563;
+        }
+
+        /* 优先级徽章 */
+        .priority-badge {
+            display: inline-flex;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .priority-badge.high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .priority-badge.mid {
+            background: #fffbeb;
+            color: #d97706;
+        }
+        .priority-badge.low {
+            background: #f0fdf4;
+            color: #059669;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 24px 12px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        /* 加载动画 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .loading-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body>
@@ -202,7 +799,7 @@
                 <button class="tab active" onclick="switchTab('chat')">💬 对话</button>
                 <button class="tab" onclick="switchTab('generate')">📝 用例生成</button>
                 <button class="tab" onclick="switchTab('files')">📁 生成文件</button>
-                <button class="tab" onclick="switchTab('analysis')">🔍 分析建议</button>
+                <button class="tab" onclick="switchTab('analysis')">🔍 用例分析</button>
             </div>
 
             <!-- 对话面板 -->
@@ -281,53 +878,139 @@
                 </div>
             </div>
 
-            <!-- 分析建议面板 -->
+            <!-- ==================== 用例分析面板（全新设计） ==================== -->
             <div class="tab-panel" id="analysis-panel">
-                <div class="analysis-content" style="flex:1;overflow-y:auto;padding:20px;">
-                    <div class="card" style="text-align:center;border:2px solid #667eea;background:linear-gradient(135deg,#f0f5ff 0%,#ffffff 100%);">
-                        <h3>🔍 测试用例分析与建议</h3>
-                        <p style="font-size:13px;color:#666;margin-bottom:16px;">系统将自动收集所有测试用例和对应的测试执行结果，AI 会进行全面的质量评估并给出具体的改进建议</p>
-                        <button class="btn btn-primary" onclick="startAnalysis()" id="analyzeBtn" style="padding:14px 40px;font-size:16px;">
-                            🚀 一键分析所有测试用例
-                        </button>
-                        <div id="analyzeStatus" style="margin-top:12px;font-size:13px;color:#999;"></div>
+                <div class="analysis-split">
+                    <!-- ====== 左侧：用例选择 + 历史 ====== -->
+                    <div class="analysis-left">
+                        <div class="analysis-left-inner">
+                            <!-- 头部横幅 -->
+                            <div class="analysis-header-banner">
+                                <h2>📋 用例分析工作台</h2>
+                                <p>选择用例 → 配置分析参数 → 开始分析</p>
+                            </div>
+
+                            <!-- 用例选择区 -->
+                            <div style="margin-bottom:4px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="font-size:13px;font-weight:600;color:#374151;">选择要分析的用例</span>
+                                    <button class="history-section-title" style="border:1px solid #e0e4ea;border-radius:6px;padding:3px 10px;font-size:12px;color:#6b7280;cursor:pointer;background:#fff;font-family:inherit;" onclick="loadAllCases()" id="refreshCasesBtn">🔄 刷新</button>
+                                </div>
+                                <div id="caseCount" style="font-size:12px;color:#9ca3af;margin-bottom:8px;">⏳ 点击刷新加载用例</div>
+
+                                <!-- 类型切换标签 -->
+                                <div class="case-tab-group">
+                                    <button class="case-tab-btn active" onclick="switchAnalysisCaseTab('api')" id="analyzeCaseTabApi">🔌 API 用例</button>
+                                    <button class="case-tab-btn" onclick="switchAnalysisCaseTab('ui')" id="analyzeCaseTabUi">🎨 UI 用例</button>
+                                </div>
+
+                                <!-- 用例列表 -->
+                                <div class="case-list-container">
+                                    <div class="select-all-bar">
+                                        <input type="checkbox" class="case-checkbox" onchange="toggleSelectAll(this)" id="selectAllCheck">
+                                        <span>全选</span>
+                                        <span class="sel-count" id="selectedCount">已选 0 个</span>
+                                    </div>
+                                    <div class="case-list-scroll" id="analysisApiCases">
+                                        <div class="empty-state">点击「刷新」加载用例列表</div>
+                                    </div>
+                                    <div class="case-list-scroll" id="analysisUiCases" style="display:none;"></div>
+                                </div>
+                            </div>
+
+                            <!-- 分析设置 -->
+                            <div class="settings-card">
+                                <div style="margin-bottom:10px;">
+                                    <label class="field-label">📝 分析名称（可选）</label>
+                                    <input type="text" class="field-input" id="analysisNameInput" placeholder="留空自动命名：年月日_第N次分析">
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label class="field-label">💬 附加要求（可选）</label>
+                                    <textarea class="field-textarea" id="analysisExtraPrompt" placeholder="例如：无需考虑性能，只考虑功能是否合理" rows="2"></textarea>
+                                </div>
+                                <button class="analyze-btn-primary" onclick="startSelectedAnalysis()" id="startAnalyzeBtn">
+                                    🚀 开始分析选中的用例
+                                </button>
+                                <div class="analyze-progress" id="analyzeProgress"></div>
+                            </div>
+
+                            <!-- 历史分析结果 -->
+                            <div>
+                                <div class="history-section-title">
+                                    <h3>📁 历史分析结果</h3>
+                                    <button class="refresh-btn" onclick="loadAnalysisHistory()">🔄 刷新</button>
+                                </div>
+                                <div class="history-list" id="analysisHistoryList">
+                                    <div class="empty-state">暂无分析记录</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div id="analyzeResult" style="display:none;">
-                        <div class="card">
-                            <h3>📊 概览</h3>
-                            <div class="summary-cards" id="analysisOverviewCards"></div>
-                        </div>
-                        <div class="card">
-                            <h3>📝 用例质量分析</h3>
-                            <div class="analysis-box" id="caseQualityAnalysis"></div>
-                        </div>
-                        <div class="card">
-                            <h3>📈 执行结果分析</h3>
-                            <div class="analysis-box" id="executionAnalysis"></div>
-                        </div>
-                        <div class="card">
-                            <h3>🎯 覆盖情况分析</h3>
-                            <div class="analysis-box" id="coverageAnalysis"></div>
-                        </div>
-                        <div class="card">
-                            <h3>💡 改进建议</h3>
-                            <div id="suggestionsList"></div>
-                        </div>
-                        <div class="card">
-                            <h3>📋 总结</h3>
-                            <div class="analysis-box" id="analysisSummary"></div>
+                    <!-- ====== 右侧：分析结果展示 ====== -->
+                    <div class="analysis-right" id="analysisRightPanel">
+                        <!-- 占位提示 -->
+                        <div class="result-placeholder" id="analysisResultPlaceholder">
+                            <div class="ph-icon">🔍</div>
+                            <h3>开始一次新的分析</h3>
+                            <p>在左侧勾选用例，设置分析参数后点击「开始分析」</p>
+                            <p style="margin-top:4px;font-size:12px;">或点击历史记录查看以往的分析结果</p>
                         </div>
 
-                        <!-- 被分析的用例列表 -->
-                        <div class="card" id="analyzedCasesCard" style="display:none;">
-                            <h3>📋 被分析的用例列表</h3>
-                            <div style="margin-bottom:12px;">
-                                <button class="btn btn-primary btn-small" onclick="switchCaseTab('api')" id="caseTabApiBtn">🔌 API 用例</button>
-                                <button class="btn btn-secondary btn-small" onclick="switchCaseTab('ui')" id="caseTabUiBtn">🎨 UI 用例</button>
+                        <!-- 结果内容 -->
+                        <div id="analysisResultContent" style="display:none;">
+                            <div class="result-header">
+                                <h3 class="rh-title" id="currentAnalysisTitle">分析结果</h3>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span class="rh-time" id="currentAnalysisTime"></span>
+                                    <button class="rh-close-btn" onclick="closeAnalysisResult()">✕ 关闭</button>
+                                </div>
                             </div>
-                            <div id="apiCaseListPanel"></div>
-                            <div id="uiCaseListPanel" style="display:none;"></div>
+
+                            <!-- JSON结构化结果 -->
+                            <div id="analysisJsonResult" style="display:none;">
+                                <div class="overview-mini-cards">
+                                    <div class="overview-mini-card">
+                                        <div class="omc-num" id="jsonCaseCount">0</div>
+                                        <div class="omc-label">分析用例数</div>
+                                    </div>
+                                    <div class="overview-mini-card">
+                                        <div class="omc-num" id="jsonAssessment" style="color:#059669;">-</div>
+                                        <div class="omc-label">整体评估</div>
+                                    </div>
+                                </div>
+
+                                <div class="result-block">
+                                    <div class="rb-title">📝 详细分析</div>
+                                    <div class="rb-content" id="jsonAnalysisDetails"></div>
+                                </div>
+
+                                <div class="result-block">
+                                    <div class="rb-title">⚠️ 发现的问题</div>
+                                    <div id="jsonIssues"></div>
+                                </div>
+
+                                <div class="result-block">
+                                    <div class="rb-title">🎯 覆盖情况分析</div>
+                                    <div class="rb-content" id="jsonCoverage"></div>
+                                </div>
+
+                                <div class="result-block">
+                                    <div class="rb-title">💡 改进建议</div>
+                                    <div id="jsonSuggestions"></div>
+                                </div>
+
+                                <div class="result-block">
+                                    <div class="rb-title">📋 总结</div>
+                                    <div class="rb-content" id="jsonSummary"></div>
+                                </div>
+                            </div>
+
+                            <!-- 原始分析内容（JSON解析失败时显示，或附加显示） -->
+                            <div class="result-block">
+                                <div class="rb-title">📄 完整分析内容</div>
+                                <div class="rb-content" id="rawAnalysisContent" style="max-height:400px;overflow-y:auto;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -372,6 +1055,7 @@
             if (tabs[tabIndex[tab]]) tabs[tabIndex[tab]].classList.add('active');
             document.getElementById(tab + '-panel').classList.add('active');
             if (tab === 'files') loadFiles();
+            if (tab === 'analysis') { loadAllCases(); loadAnalysisHistory(); }
         }
 
         // ========== 对话功能 ==========
@@ -775,7 +1459,367 @@
             }
         }
 
-        // ========== 分析建议功能 ==========
+        // ========== 用例分析功能（选择用例分析） ==========
+
+        // 全局变量
+        let allApiCases = [];
+        let allUiCases = [];
+        let selectedCaseIds = new Set();
+        let currentAnalysisTab = 'api';
+
+        /**
+         * 加载所有测试用例
+         */
+        async function loadAllCases() {
+            try {
+                const res = await fetch('/api/llm/all_cases');
+                const data = await res.json();
+                if (!data.success) {
+                    document.getElementById('caseCount').textContent = '加载失败';
+                    return;
+                }
+
+                allApiCases = data.data.api_cases || [];
+                allUiCases = data.data.ui_cases || [];
+
+                document.getElementById('caseCount').textContent =
+                    `共 ${data.data.total} 个用例（API: ${data.data.api_count}, UI: ${data.data.ui_count}）`;
+
+                renderCaseList();
+                updateSelectedCount();
+            } catch (e) {
+                document.getElementById('caseCount').textContent = '加载失败: ' + e.message;
+            }
+        }
+
+        /**
+         * 切换API/UI用例列表
+         */
+        function switchAnalysisCaseTab(type) {
+            currentAnalysisTab = type;
+            document.getElementById('analysisApiCases').style.display = type === 'api' ? 'block' : 'none';
+            document.getElementById('analysisUiCases').style.display = type === 'ui' ? 'block' : 'none';
+            document.getElementById('analyzeCaseTabApi').className = 'case-tab-btn' + (type === 'api' ? ' active' : '');
+            document.getElementById('analyzeCaseTabUi').className = 'case-tab-btn' + (type === 'ui' ? ' active' : '');
+            renderCaseList();
+        }
+
+        /**
+         * 渲染当前标签的用例列表
+         */
+        function renderCaseList() {
+            if (currentAnalysisTab === 'api') {
+                renderApiCases();
+            } else {
+                renderUiCases();
+            }
+        }
+
+        function renderApiCases() {
+            const container = document.getElementById('analysisApiCases');
+            if (allApiCases.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无 API 测试用例</div>';
+                return;
+            }
+            container.innerHTML = allApiCases.map(c => `
+                <div class="case-checkbox-wrapper ${selectedCaseIds.has(c.id) ? 'selected' : ''}" onclick="toggleCase('${c.id}')">
+                    <input type="checkbox" class="case-checkbox" ${selectedCaseIds.has(c.id) ? 'checked' : ''}
+                           onchange="toggleCase('${c.id}')" id="chk_${c.id}" onclick="event.stopPropagation();toggleCase('${c.id}')">
+                    <label class="case-label" for="chk_${c.id}" onclick="event.stopPropagation();">
+                        <span class="tag-type tag-type-api">API</span>
+                        <span class="case-name-text">${escapeHtml(c.name || '未命名')}</span>
+                        <span class="case-meta">${escapeHtml(c.method || 'GET')}</span>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function renderUiCases() {
+            const container = document.getElementById('analysisUiCases');
+            if (allUiCases.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无 UI 测试用例</div>';
+                return;
+            }
+            container.innerHTML = allUiCases.map(c => `
+                <div class="case-checkbox-wrapper ${selectedCaseIds.has(c.id) ? 'selected' : ''}" onclick="toggleCase('${c.id}')">
+                    <input type="checkbox" class="case-checkbox" ${selectedCaseIds.has(c.id) ? 'checked' : ''}
+                           onchange="toggleCase('${c.id}')" id="chk_${c.id}" onclick="event.stopPropagation();toggleCase('${c.id}')">
+                    <label class="case-label" for="chk_${c.id}" onclick="event.stopPropagation();">
+                        <span class="tag-type tag-type-ui">UI</span>
+                        <span class="case-name-text">${escapeHtml(c.name || '未命名')}</span>
+                        <span class="case-meta">${c.steps_count || 0} 步</span>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 切换单个用例的选中状态
+         */
+        function toggleCase(caseId) {
+            if (selectedCaseIds.has(caseId)) {
+                selectedCaseIds.delete(caseId);
+            } else {
+                selectedCaseIds.add(caseId);
+            }
+            renderCaseList();
+            updateSelectedCount();
+            updateSelectAllCheckbox();
+        }
+
+        /**
+         * 全选/取消全选
+         */
+        function toggleSelectAll(checkbox) {
+            const checked = checkbox.checked;
+            const currentCases = currentAnalysisTab === 'api' ? allApiCases : allUiCases;
+            currentCases.forEach(c => {
+                if (checked) {
+                    selectedCaseIds.add(c.id);
+                } else {
+                    selectedCaseIds.delete(c.id);
+                }
+            });
+            renderCaseList();
+            updateSelectedCount();
+        }
+
+        /**
+         * 更新全选复选框状态
+         */
+        function updateSelectAllCheckbox() {
+            const currentCases = currentAnalysisTab === 'api' ? allApiCases : allUiCases;
+            const selectAll = document.getElementById('selectAllCheck');
+            if (currentCases.length === 0) {
+                selectAll.checked = false;
+                selectAll.indeterminate = false;
+                return;
+            }
+            const allSelected = currentCases.every(c => selectedCaseIds.has(c.id));
+            const someSelected = currentCases.some(c => selectedCaseIds.has(c.id));
+            selectAll.checked = allSelected;
+            selectAll.indeterminate = someSelected && !allSelected;
+        }
+
+        /**
+         * 更新已选数量显示
+         */
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = `已选 ${selectedCaseIds.size} 个`;
+            updateSelectAllCheckbox();
+        }
+
+        /**
+         * 开始分析选中的用例
+         */
+        async function startSelectedAnalysis() {
+            if (selectedCaseIds.size === 0) {
+                alert('请至少选择一个测试用例！');
+                return;
+            }
+
+            const btn = document.getElementById('startAnalyzeBtn');
+            const progress = document.getElementById('analyzeProgress');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中，请耐心等待...';
+            progress.style.display = 'block';
+            progress.textContent = '正在调用 AI 分析用例...';
+            progress.style.color = '#667eea';
+
+            const extraPrompt = document.getElementById('analysisExtraPrompt').value.trim();
+            const analysisName = document.getElementById('analysisNameInput').value.trim();
+
+            try {
+                const res = await fetch('/api/llm/analyze_cases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        case_ids: Array.from(selectedCaseIds),
+                        extra_prompt: extraPrompt,
+                        analysis_name: analysisName
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    displayAnalysisResult(data.data);
+                    progress.textContent = `✅ 分析完成：${data.data.analysis_name}`;
+                    progress.style.color = '#52c41a';
+                    // 刷新历史列表
+                    loadAnalysisHistory();
+                } else {
+                    progress.textContent = '❌ ' + data.message;
+                    progress.style.color = '#ff4d4f';
+                }
+            } catch (e) {
+                progress.textContent = '❌ 请求失败: ' + e.message;
+                progress.style.color = '#ff4d4f';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 开始分析选中的用例';
+                setTimeout(() => { progress.style.display = 'none'; }, 5000);
+            }
+        }
+
+        /**
+         * 显示分析结果（新的显示方式）
+         */
+        function displayAnalysisResult(data) {
+            document.getElementById('analysisResultPlaceholder').style.display = 'none';
+            document.getElementById('analysisResultContent').style.display = 'block';
+
+            // 设置标题和时间
+            document.getElementById('currentAnalysisTitle').textContent = '📊 ' + (data.analysis_name || '分析结果');
+            document.getElementById('currentAnalysisTime').textContent = '';
+
+            // 清空旧内容
+            document.getElementById('jsonAnalysisDetails').textContent = '';
+            document.getElementById('jsonIssues').innerHTML = '';
+            document.getElementById('jsonCoverage').textContent = '';
+            document.getElementById('jsonSuggestions').innerHTML = '';
+            document.getElementById('jsonSummary').textContent = '';
+            document.getElementById('rawAnalysisContent').textContent = '';
+
+            // 检查是否有JSON结构化结果
+            const analysisJson = data.analysis_json;
+            if (analysisJson && typeof analysisJson === 'object' && !Array.isArray(analysisJson)) {
+                document.getElementById('analysisJsonResult').style.display = 'block';
+
+                // 概览
+                document.getElementById('jsonCaseCount').textContent = analysisJson.case_count || (data.api_count + data.ui_count) || '-';
+                document.getElementById('jsonAssessment').textContent = analysisJson.overall_assessment || '-';
+
+                // 详细分析
+                document.getElementById('jsonAnalysisDetails').textContent = analysisJson.analysis_details || '暂无详细分析';
+
+                // 发现的问题
+                const issues = analysisJson.issues_found || [];
+                const issuesContainer = document.getElementById('jsonIssues');
+                if (issues.length === 0) {
+                    issuesContainer.innerHTML = '<p style="color:#999;padding:8px;">未发现明显问题 ✅</p>';
+                } else {
+                    issuesContainer.innerHTML = issues.map(iss => `
+                        <div class="issue-card">
+                            <div class="ic-name">📌 ${escapeHtml(iss.case_name || '')}</div>
+                            <div class="ic-detail"><strong>问题：</strong>${escapeHtml(iss.issue || '')}</div>
+                            <div class="ic-suggest"><strong>建议：</strong>${escapeHtml(iss.suggestion || '')}</div>
+                        </div>
+                    `).join('');
+                }
+
+                // 覆盖情况
+                document.getElementById('jsonCoverage').textContent = analysisJson.coverage_analysis || '暂无覆盖情况分析';
+
+                // 改进建议
+                const suggestions = analysisJson.suggestions || [];
+                const sugContainer = document.getElementById('jsonSuggestions');
+                if (suggestions.length === 0) {
+                    sugContainer.innerHTML = '<p style="color:#999;padding:8px;">暂无改进建议</p>';
+                } else {
+                    sugContainer.innerHTML = suggestions.map(s => `
+                        <div class="sug-card">
+                            <div class="sc-top">
+                                <span class="priority-badge ${s.priority === '高' ? 'high' : s.priority === '低' ? 'low' : 'mid'}">${escapeHtml(s.priority || '中')}</span>
+                                <span style="font-size:12px;color:#9ca3af;">${escapeHtml(s.category || '其他')}</span>
+                            </div>
+                            <div class="sc-content">${escapeHtml(s.content || '')}</div>
+                        </div>
+                    `).join('');
+                }
+
+                // 总结
+                document.getElementById('jsonSummary').textContent = analysisJson.summary || '暂无总结';
+            } else {
+                document.getElementById('analysisJsonResult').style.display = 'none';
+            }
+
+            // 原始内容
+            document.getElementById('rawAnalysisContent').textContent = data.analysis_content || '无分析内容';
+        }
+
+        /**
+         * 关闭分析结果，返回占位视图
+         */
+        function closeAnalysisResult() {
+            document.getElementById('analysisResultPlaceholder').style.display = 'block';
+            document.getElementById('analysisResultContent').style.display = 'none';
+            // 可选：滚动右侧面板到顶部
+            const rightPanel = document.getElementById('analysisRightPanel');
+            if (rightPanel) {
+                rightPanel.scrollTop = 0;
+            }
+        }
+
+        /**
+         * 加载历史分析结果列表
+         */
+        async function loadAnalysisHistory() {
+            try {
+                const res = await fetch('/api/llm/analysis_results');
+                const data = await res.json();
+                const container = document.getElementById('analysisHistoryList');
+
+                if (!data.success || data.total === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:12px;color:#999;font-size:13px;">暂无分析记录</div>';
+                    return;
+                }
+
+                container.innerHTML = data.data.map(item => `
+                    <div class="history-item" onclick="viewAnalysisResult('${item.filename}')">
+                        <div class="h-icon">📊</div>
+                        <div class="h-info">
+                            <div class="h-name">${escapeHtml(item.analysis_name)}</div>
+                            <div class="h-meta">${item.created_at || ''} · API ${item.api_case_count} / UI ${item.ui_case_count}</div>
+                        </div>
+                        <button class="h-del" onclick="event.stopPropagation();deleteAnalysisResult('${item.filename}')" title="删除">🗑️</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('analysisHistoryList').innerHTML =
+                    '<div style="text-align:center;padding:12px;color:#ff4d4f;font-size:13px;">加载失败: ' + e.message + '</div>';
+            }
+        }
+
+        /**
+         * 查看历史分析结果
+         */
+        async function viewAnalysisResult(filename) {
+            try {
+                const res = await fetch(`/api/llm/analysis_results/${filename}`);
+                const data = await res.json();
+                if (data.success) {
+                    displayAnalysisResult(data.data);
+                } else {
+                    alert('加载失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+
+        /**
+         * 删除历史分析结果
+         */
+        async function deleteAnalysisResult(filename) {
+            if (!confirm('确定要删除此分析结果吗？')) return;
+            try {
+                const res = await fetch(`/api/llm/analysis_results/${filename}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    loadAnalysisHistory();
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            }
+        }
+
+        /** 保留原有的escapeHtml函数引用 */
+
+        // ========== 对话中的AI分析（恢复被移除的函数） ==========
 
         /**
          * 在对话中快速发起AI分析请求（使用支持工具调用的聊天端点）
@@ -820,165 +1864,6 @@
                 chatAnalyzeBtn.disabled = false;
                 input.focus();
             }
-        }
-
-        /**
-         * 一键分析所有测试用例和测试执行结果
-         */
-        async function startAnalysis() {
-            const btn = document.getElementById('analyzeBtn');
-            const status = document.getElementById('analyzeStatus');
-
-            btn.disabled = true;
-            btn.textContent = '⏳ 分析中，请耐心等待...';
-            status.textContent = '正在收集测试数据并调用 AI 进行分析...';
-            status.style.color = '#667eea';
-
-            // 切换到分析建议标签页
-            switchTab('analysis');
-
-            try {
-                const res = await fetch('/api/llm/analyze', { method: 'POST' });
-                const data = await res.json();
-
-                if (data.success) {
-                    renderAnalysisResult(data.data);
-                    status.textContent = '✅ 分析完成 (' + (data.data.api_cases.length + data.data.ui_cases.length) + ' 个用例)';
-                    status.style.color = '#52c41a';
-                } else {
-                    status.textContent = '❌ ' + data.message;
-                    status.style.color = '#ff4d4f';
-                }
-            } catch (e) {
-                status.textContent = '❌ 请求失败: ' + e.message;
-                status.style.color = '#ff4d4f';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '🚀 一键分析所有测试用例';
-            }
-        }
-
-        /**
-         * 渲染分析结果
-         */
-        function renderAnalysisResult(data) {
-            document.getElementById('analyzeResult').style.display = 'block';
-
-            // data 结构: { analysis: {...}, api_cases: [...], ui_cases: [...] }
-            const analysis = data.analysis || data;
-            const api_cases = data.api_cases || [];
-            const ui_cases = data.ui_cases || [];
-
-            // 概览卡片
-            const overview = analysis.overview || {};
-            document.getElementById('analysisOverviewCards').innerHTML = `
-                <div class="summary-card"><div class="num">${overview.api_case_count || 0}</div><div class="label">API用例</div></div>
-                <div class="summary-card" style="background:linear-gradient(135deg,#52c41a,#73d13d)"><div class="num">${overview.ui_case_count || 0}</div><div class="label">UI用例</div></div>
-                <div class="summary-card" style="background:linear-gradient(135deg,#faad14,#ffc53d)"><div class="num">${overview.api_execution_count || 0}</div><div class="label">API执行次数</div></div>
-                <div class="summary-card" style="background:linear-gradient(135deg,#ff4d4f,#ff7875)"><div class="num">${overview.ui_execution_count || 0}</div><div class="label">UI执行次数</div></div>
-                <div class="summary-card" style="background:linear-gradient(135deg,#722ed1,#b37feb)"><div class="num">${overview.api_pass_rate || 'N/A'}</div><div class="label">API通过率</div></div>
-                <div class="summary-card" style="background:linear-gradient(135deg,#1890ff,#69c0ff)"><div class="num">${overview.ui_pass_rate || 'N/A'}</div><div class="label">UI通过率</div></div>
-            `;
-
-            // Markdown 内容显示
-            document.getElementById('caseQualityAnalysis').textContent = analysis.case_quality_analysis || '暂无分析';
-            document.getElementById('executionAnalysis').textContent = analysis.execution_analysis || '暂无分析';
-            document.getElementById('coverageAnalysis').textContent = analysis.coverage_analysis || '暂无分析';
-            document.getElementById('analysisSummary').textContent = analysis.summary || '暂无总结';
-
-            // 建议列表
-            const suggestions = analysis.suggestions || [];
-            const suggestionsContainer = document.getElementById('suggestionsList');
-            if (suggestions.length === 0) {
-                suggestionsContainer.innerHTML = '<p style="color:#999;">暂无建议</p>';
-            } else {
-                suggestionsContainer.innerHTML = suggestions.map((s, i) => `
-                    <div style="padding:12px 16px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                            <span class="badge badge-${s.priority === '高' ? 'high' : 'mid'}">${s.priority || '中'}</span>
-                            <span style="font-size:12px;color:#666;">${s.category || '其他'}</span>
-                        </div>
-                        <div style="font-size:14px;line-height:1.6;">${escapeHtml(s.content || '')}</div>
-                    </div>
-                `).join('');
-            }
-
-            // 用例列表
-            renderCaseLists(api_cases, ui_cases);
-
-            // 滚动到结果区域
-            document.getElementById('analyzeResult').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        /**
-         * 渲染被分析的用例列表
-         */
-        function renderCaseLists(api_cases, ui_cases) {
-            if (api_cases.length === 0 && ui_cases.length === 0) return;
-
-            document.getElementById('analyzedCasesCard').style.display = 'block';
-
-            // API 用例表格
-            if (api_cases.length > 0) {
-                document.getElementById('apiCaseListPanel').innerHTML = `
-                    <p style="font-size:13px;color:#666;margin-bottom:8px;">共 ${api_cases.length} 个 API 测试用例</p>
-                    <table class="case-table">
-                        <tr>
-                            <th>名称</th>
-                            <th>方法</th>
-                            <th>URL</th>
-                            <th>描述</th>
-                        </tr>
-                        ${api_cases.map(c => `
-                            <tr>
-                                <td style="font-weight:500;">${escapeHtml(c.name || '未命名')}</td>
-                                <td><span class="badge badge-api">${escapeHtml(c.method || 'GET')}</span></td>
-                                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.url || '')}">${escapeHtml(c.url || '-')}</td>
-                                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.description || '')}">${escapeHtml(c.description || '-')}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                `;
-            } else {
-                document.getElementById('apiCaseListPanel').innerHTML = '<p style="color:#999;padding:12px;">暂无 API 测试用例</p>';
-            }
-
-            // UI 用例表格
-            if (ui_cases.length > 0) {
-                document.getElementById('uiCaseListPanel').innerHTML = `
-                    <p style="font-size:13px;color:#666;margin-bottom:8px;">共 ${ui_cases.length} 个 UI 测试用例</p>
-                    <table class="case-table">
-                        <tr>
-                            <th>名称</th>
-                            <th>起始URL</th>
-                            <th>步骤数</th>
-                            <th>描述</th>
-                        </tr>
-                        ${ui_cases.map(c => `
-                            <tr>
-                                <td style="font-weight:500;">${escapeHtml(c.name || '未命名')}</td>
-                                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.url || '')}">${escapeHtml(c.url || '-')}</td>
-                                <td>${c.steps_count || 0}</td>
-                                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(c.description || '')}">${escapeHtml(c.description || '-')}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                `;
-            } else {
-                document.getElementById('uiCaseListPanel').innerHTML = '<p style="color:#999;padding:12px;">暂无 UI 测试用例</p>';
-            }
-        }
-
-        /**
-         * 切换用例列表的子标签
-         */
-        let currentCaseTab = 'api';
-        function switchCaseTab(tab) {
-            currentCaseTab = tab;
-            document.getElementById('apiCaseListPanel').style.display = tab === 'api' ? 'block' : 'none';
-            document.getElementById('uiCaseListPanel').style.display = tab === 'ui' ? 'block' : 'none';
-            document.getElementById('caseTabApiBtn').className = tab === 'api' ? 'btn btn-primary btn-small' : 'btn btn-secondary btn-small';
-            document.getElementById('caseTabUiBtn').className = tab === 'ui' ? 'btn btn-primary btn-small' : 'btn btn-secondary btn-small';
         }
     </script>
 </body>
