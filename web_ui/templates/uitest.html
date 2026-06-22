@@ -663,32 +663,41 @@
             document.getElementById('modalTitle').textContent = 
                 stepIndex !== null ? '编辑步骤' : selectedAction.name;
             
+            // 编辑时获取已有步骤的参数值
+            let existingParams = {};
+            if (stepIndex !== null && steps[stepIndex]) {
+                existingParams = steps[stepIndex].params || {};
+            }
+            
             let html = '';
             selectedAction.params.forEach(param => {
                 const required = param.required ? '<span class="required-mark">*</span>' : '';
+                const existingValue = existingParams[param.key];
+                const hasExisting = existingValue !== undefined && existingValue !== null;
                 
                 if (param.type === 'select') {
                     html += `<div class="param-form-group">`;
                     html += `<label>${param.label}${required}</label>`;
                     html += `<select id="param_${param.key}">`;
                     param.options.forEach(opt => {
-                        const selected = opt === param.default ? 'selected' : '';
+                        const selected = (hasExisting ? existingValue : param.default) === opt ? 'selected' : '';
                         html += `<option value="${opt}" ${selected}>${opt}</option>`;
                     });
                     html += `</select></div>`;
                 } else if (param.type === 'array') {
+                    const arrayValue = hasExisting ? (Array.isArray(existingValue) ? existingValue.join(', ') : existingValue) : '';
                     html += `<div class="param-form-group">`;
                     html += `<label>${param.label}${required}</label>`;
-                    html += `<textarea id="param_${param.key}" rows="3" placeholder="${param.placeholder || '用逗号分隔多个值'}"></textarea>`;
+                    html += `<textarea id="param_${param.key}" rows="3" placeholder="${param.placeholder || '用逗号分隔多个值'}">${arrayValue}</textarea>`;
                     html += `</div>`;
                 } else {
                     const inputType = param.type === 'number' ? 'number' : 'text';
-                    const defaultValue = param.default || '';
+                    const value = hasExisting ? existingValue : (param.default || '');
                     html += `<div class="param-form-group">`;
                     html += `<label>${param.label}${required}</label>`;
                     html += `<input type="${inputType}" id="param_${param.key}" 
                              placeholder="${param.placeholder || ''}" 
-                             value="${defaultValue}">`;
+                             value="${value}">`;
                     html += `</div>`;
                 }
             });
