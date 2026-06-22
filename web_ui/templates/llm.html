@@ -814,7 +814,6 @@
                 <div class="chat-input-area">
                     <textarea id="chatInput" placeholder="输入消息，Enter 发送，Shift+Enter 换行..." rows="3"
                               onkeydown="handleChatKey(event)"></textarea>
-                    <button class="btn btn-success" onclick="sendChatAnalysisRequest()" id="chatAnalyzeBtn" style="white-space:nowrap;flex-shrink:0;margin-right:8px;">🔍 AI 分析</button>
                     <button class="btn btn-primary" onclick="sendMessage()" id="sendBtn">发送</button>
                 </div>
             </div>
@@ -900,8 +899,8 @@
 
                                 <!-- 类型切换标签 -->
                                 <div class="case-tab-group">
-                                    <button class="case-tab-btn active" onclick="switchAnalysisCaseTab('api')" id="analyzeCaseTabApi">🔌 API 用例</button>
-                                    <button class="case-tab-btn" onclick="switchAnalysisCaseTab('ui')" id="analyzeCaseTabUi">🎨 UI 用例</button>
+                                    <button class="case-tab-btn active" onclick="switchAnalysisCaseTab('api')" id="analyzeCaseTabApi"> API 用例</button>
+                                    <button class="case-tab-btn" onclick="switchAnalysisCaseTab('ui')" id="analyzeCaseTabUi"> UI 用例</button>
                                 </div>
 
                                 <!-- 用例列表 -->
@@ -929,7 +928,7 @@
                                     <textarea class="field-textarea" id="analysisExtraPrompt" placeholder="例如：无需考虑性能，只考虑功能是否合理" rows="2"></textarea>
                                 </div>
                                 <button class="analyze-btn-primary" onclick="startSelectedAnalysis()" id="startAnalyzeBtn">
-                                    🚀 开始分析选中的用例
+                                    开始分析选中的用例
                                 </button>
                                 <div class="analyze-progress" id="analyzeProgress"></div>
                             </div>
@@ -937,7 +936,7 @@
                             <!-- 历史分析结果 -->
                             <div>
                                 <div class="history-section-title">
-                                    <h3>📁 历史分析结果</h3>
+                                    <h3>历史分析结果</h3>
                                     <button class="refresh-btn" onclick="loadAnalysisHistory()">🔄 刷新</button>
                                 </div>
                                 <div class="history-list" id="analysisHistoryList">
@@ -981,27 +980,27 @@
                                 </div>
 
                                 <div class="result-block">
-                                    <div class="rb-title">📝 详细分析</div>
+                                    <div class="rb-title">详细分析</div>
                                     <div class="rb-content" id="jsonAnalysisDetails"></div>
                                 </div>
 
                                 <div class="result-block">
-                                    <div class="rb-title">⚠️ 发现的问题</div>
+                                    <div class="rb-title">发现的问题</div>
                                     <div id="jsonIssues"></div>
                                 </div>
 
                                 <div class="result-block">
-                                    <div class="rb-title">🎯 覆盖情况分析</div>
+                                    <div class="rb-title">覆盖情况分析</div>
                                     <div class="rb-content" id="jsonCoverage"></div>
                                 </div>
 
                                 <div class="result-block">
-                                    <div class="rb-title">💡 改进建议</div>
+                                    <div class="rb-title">改进建议</div>
                                     <div id="jsonSuggestions"></div>
                                 </div>
 
                                 <div class="result-block">
-                                    <div class="rb-title">📋 总结</div>
+                                    <div class="rb-title">总结</div>
                                     <div class="rb-content" id="jsonSummary"></div>
                                 </div>
                             </div>
@@ -1142,7 +1141,13 @@
                 const data = await res.json();
                 if (data.success) {
                     currentSessionId = data.data.session_id;
-                    appendMessage('assistant', data.data.reply);
+                    let reply = data.data.reply;
+                    // 如果调用了工具，显示分析提示
+                    if (data.data.tool_calls && data.data.tool_calls.length > 0) {
+                        const toolNames = data.data.tool_calls.map(t => t.tool).join('、');
+                        reply = '📊 **已分析以下数据：** ' + toolNames + '\n\n---\n\n' + reply;
+                    }
+                    appendMessage('assistant', reply);
                     loadSessions();
                 } else {
                     appendMessage('assistant', '❌ ' + data.message);
@@ -1819,52 +1824,7 @@
 
         /** 保留原有的escapeHtml函数引用 */
 
-        // ========== 对话中的AI分析（恢复被移除的函数） ==========
 
-        /**
-         * 在对话中快速发起AI分析请求（使用支持工具调用的聊天端点）
-         */
-        async function sendChatAnalysisRequest() {
-            const message = '请帮我分析系统中现有的所有测试用例和最近的测试执行结果，给出全面的改进建议。';
-
-            const input = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const chatAnalyzeBtn = document.getElementById('chatAnalyzeBtn');
-
-            input.value = '';
-            sendBtn.disabled = true;
-            chatAnalyzeBtn.disabled = true;
-
-            appendMessage('user', message);
-
-            try {
-                const res = await fetch('/api/llm/chat_with_tools', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: currentSessionId, message })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    currentSessionId = data.data.session_id;
-                    let reply = data.data.reply;
-                    // 如果调用了工具，添加分析提示
-                    if (data.data.tool_calls && data.data.tool_calls.length > 0) {
-                        const toolNames = data.data.tool_calls.map(t => t.tool).join('、');
-                        reply = '📊 **已分析以下数据：** ' + toolNames + '\n\n---\n\n' + reply;
-                    }
-                    appendMessage('assistant', reply);
-                    loadSessions();
-                } else {
-                    appendMessage('assistant', '❌ ' + data.message);
-                }
-            } catch (e) {
-                appendMessage('assistant', '❌ 请求失败: ' + e.message);
-            } finally {
-                sendBtn.disabled = false;
-                chatAnalyzeBtn.disabled = false;
-                input.focus();
-            }
-        }
     </script>
 </body>
 </html>
