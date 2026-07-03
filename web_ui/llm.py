@@ -343,26 +343,40 @@ def generate_cases():
         requirement_text = data.get('requirement_text', '').strip()
         uploaded_file = data.get('uploaded_file', '')
         extra_prompt = data.get('extra_prompt', '')
+        template_headers = data.get('template_headers', [])
 
         if uploaded_file:
             filepath = os.path.join(xlsx_manager.get_upload_dir(), os.path.basename(uploaded_file))
             if not os.path.exists(filepath):
                 return jsonify({'success': False, 'message': '上传的文件不存在'}), 404
-            result, xlsx_filename = case_generator.generate_from_file(filepath, extra_prompt)
+            content = case_generator.read_document(filepath)
+            if template_headers:
+                result, xlsx_filename, csv_filename = case_generator.generate_with_template(content, template_headers, extra_prompt)
+            else:
+                result, xlsx_filename = case_generator.generate_from_text(content, extra_prompt)
+                csv_filename = None
         elif requirement_text:
-            result, xlsx_filename = case_generator.generate_from_text(requirement_text, extra_prompt)
+            if template_headers:
+                result, xlsx_filename, csv_filename = case_generator.generate_with_template(requirement_text, template_headers, extra_prompt)
+            else:
+                result, xlsx_filename = case_generator.generate_from_text(requirement_text, extra_prompt)
+                csv_filename = None
         else:
             return jsonify({'success': False, 'message': '请提供需求文本或上传需求文档'}), 400
 
+        function_cases = result.get('function_cases', [])
         return jsonify({
             'success': True,
             'data': {
                 'xlsx_filename': xlsx_filename,
+                'csv_filename': csv_filename,
                 'requirements_analysis': result.get('requirements_analysis', ''),
                 'api_cases': result.get('api_cases', []),
                 'ui_cases': result.get('ui_cases', []),
+                'function_cases': function_cases,
                 'api_count': len(result.get('api_cases', [])),
-                'ui_count': len(result.get('ui_cases', []))
+                'ui_count': len(result.get('ui_cases', [])),
+                'function_count': len(function_cases)
             }
         })
     except Exception as e:
@@ -370,25 +384,72 @@ def generate_cases():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@llm_bp.route('/api/llm/csv/upload_template', methods=['POST'])
+def upload_csv_template():
+    """上传CSV模板文件，提取表头"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': '请选择文件'}), 400
+
+        file = request.files['file']
+        if not file.filename:
+            return jsonify({'success': False, 'message': '文件名不能为空'}), 400
+
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext != '.csv':
+            return jsonify({'success': False, 'message': '仅支持CSV格式文件'}), 400
+
+        save_name = f"template_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        filepath = os.path.join(xlsx_manager.get_upload_dir(), save_name)
+        file.save(filepath)
+
+        headers = xlsx_manager.parse_csv_template(filepath)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'filename': save_name,
+                'original_name': file.filename,
+                'headers': headers,
+                'header_count': len(headers)
+            }
+        })
+    except Exception as e:
+        logger.error(f"上传CSV模板失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 # ==================== XLSX 文件管理 ====================
 
 @llm_bp.route('/api/llm/files', methods=['GET'])
 def list_generated_files():
-    """列出所有生成的 xlsx 文件"""
+    """列出所有生成的 xlsx 文件（支持分页和搜索）"""
     try:
-        files = xlsx_manager.list_files()
-        return jsonify({'success': True, 'data': files, 'total': len(files)})
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('page_size', 10))
+        keyword = request.args.get('keyword', '')
+        result = xlsx_manager.list_files(page, page_size, keyword)
+        return jsonify({'success': True, **result})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@llm_bp.route('/api/llm/files/<filename>', methods=['GET'])
-def download_file(filename):
-    """下载 xlsx 文件"""
-    filepath = xlsx_manager.get_filepath(filename)
-    if filepath:
-        return send_file(filepath, as_attachment=True, download_name=filename)
-    return jsonify({'success': False, 'message': '文件不存在'}), 404
+@llm_bp.route('/api/llm/files/<filename>', methods=['GET', 'DELETE'])
+def manage_file(filename):
+    """下载或删除 xlsx 文件"""
+    if request.method == 'GET':
+        filepath = xlsx_manager.get_filepath(filename)
+        if filepath:
+            return send_file(filepath, as_attachment=True, download_name=filename)
+        return jsonify({'success': False, 'message': '文件不存在'}), 404
+    elif request.method == 'DELETE':
+        try:
+            success = xlsx_manager.delete_file(filename)
+            if success:
+                return jsonify({'success': True, 'message': f'文件 {filename} 已删除'})
+            return jsonify({'success': False, 'message': '文件不存在'}), 404
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @llm_bp.route('/api/llm/files/<filename>/preview', methods=['GET'])
@@ -401,6 +462,81 @@ def preview_file(filename):
         return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== 功能测试用例 CSV 管理 ====================
+
+@llm_bp.route('/api/llm/csv/template', methods=['GET'])
+def download_csv_template():
+    """下载功能测试用例 CSV 模板"""
+    try:
+        filepath, filename = xlsx_manager.generate_csv_template()
+        return send_file(filepath, as_attachment=True, download_name=filename)
+    except Exception as e:
+        logger.error(f"生成CSV模板失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/csv/export', methods=['POST'])
+def export_function_cases_to_csv():
+    """将功能测试用例导出为 CSV 文件"""
+    try:
+        data = request.json or {}
+        function_cases = data.get('function_cases', [])
+        xlsx_filename = data.get('xlsx_filename', '')
+
+        if xlsx_filename and not function_cases:
+            file_data = xlsx_manager.read_cases_from_xlsx(xlsx_filename)
+            if file_data:
+                function_cases = file_data.get('function_cases', [])
+
+        if not function_cases:
+            return jsonify({'success': False, 'message': '没有可导出的功能测试用例'}), 400
+
+        filepath, filename = xlsx_manager.save_function_cases_to_csv(function_cases)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'filename': filename,
+                'case_count': len(function_cases)
+            },
+            'message': f'CSV 文件已生成: {filename} ({len(function_cases)} 个用例)'
+        })
+    except Exception as e:
+        logger.error(f"导出功能测试用例失败: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/csv/files', methods=['GET'])
+def list_csv_files():
+    """列出所有生成的 CSV 文件（支持分页和搜索）"""
+    try:
+        page = int(request.args.get('page', 1))
+        page_size = int(request.args.get('page_size', 10))
+        keyword = request.args.get('keyword', '')
+        result = xlsx_manager.list_csv_files(page, page_size, keyword)
+        return jsonify({'success': True, **result})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@llm_bp.route('/api/llm/csv/files/<filename>', methods=['GET', 'DELETE'])
+def manage_csv_file(filename):
+    """下载或删除 CSV 文件"""
+    if request.method == 'GET':
+        filepath = xlsx_manager.get_csv_filepath(filename)
+        if filepath:
+            return send_file(filepath, as_attachment=True, download_name=filename)
+        return jsonify({'success': False, 'message': '文件不存在'}), 404
+    elif request.method == 'DELETE':
+        try:
+            success = xlsx_manager.delete_csv_file(filename)
+            if success:
+                return jsonify({'success': True, 'message': f'文件 {filename} 已删除'})
+            return jsonify({'success': False, 'message': '文件不存在'}), 404
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
 
 
 # ==================== 用例导入与执行 ====================

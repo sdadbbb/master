@@ -163,6 +163,15 @@
         .file-item .file-meta { font-size: 12px; color: #999; margin-top: 4px; }
         .file-actions { display: flex; gap: 8px; }
 
+        .search-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+
+        .table-container { overflow-x: auto; }
+        .file-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        .file-table th, .file-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .file-table th { background: #f5f5f5; font-weight: 600; color: #333; font-size: 13px; }
+        .file-table tr:hover { background: #fafafa; }
+        .file-table tr:last-child td { border-bottom: none; }
+
         .loading { text-align: center; padding: 40px; color: #999; }
         .loading::after { content: ''; animation: dots 1.5s infinite; }
         @keyframes dots { 0%,20% { content: '.'; } 40% { content: '..'; } 60%,100% { content: '...'; } }
@@ -872,8 +881,56 @@
 
             <!-- 文件列表面板 -->
             <div class="tab-panel" id="files-panel">
-                <div class="file-list" id="fileList">
-                    <div class="loading">加载中</div>
+                <div class="file-list">
+                    <!-- XLSX 文件管理 -->
+                    <div class="card">
+                        <h3>📊 测试用例文件管理</h3>
+                        <div class="search-bar">
+                            <input type="text" id="xlsxSearchInput" placeholder="搜索文件名..." style="flex:1;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;">
+                            <button class="btn btn-primary" onclick="loadFiles()">🔍 搜索</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="file-table">
+                                <thead>
+                                    <tr>
+                                        <th>文件名</th>
+                                        <th>大小</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="xlsxFileTableBody">
+                                    <tr><td colspan="4" style="text-align:center;color:#999;">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="xlsxPagination" class="pagination"></div>
+                    </div>
+
+                    <!-- CSV 文件管理 -->
+                    <div class="card" style="margin-top:16px;">
+                        <h3>📋 功能测试用例CSV文件</h3>
+                        <div class="search-bar">
+                            <input type="text" id="csvSearchInput" placeholder="搜索文件名..." style="flex:1;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;">
+                            <button class="btn btn-primary" onclick="loadCsvFiles()">🔍 搜索</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="file-table">
+                                <thead>
+                                    <tr>
+                                        <th>文件名</th>
+                                        <th>大小</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="csvFileTableBody">
+                                    <tr><td colspan="4" style="text-align:center;color:#999;">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="csvPagination" class="pagination"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1312,31 +1369,130 @@
         }
 
         // ========== 文件列表 ==========
-        async function loadFiles() {
-            const container = document.getElementById('fileList');
+        // ========== 文件列表 ==========
+        let xlsxCurrentPage = 1;
+        let csvCurrentPage = 1;
+
+        async function loadFiles(page) {
+            const keyword = document.getElementById('xlsxSearchInput').value;
+            const tbody = document.getElementById('xlsxFileTableBody');
+            const pg = page || xlsxCurrentPage;
+            xlsxCurrentPage = pg;
             try {
-                const res = await fetch('/api/llm/files');
+                const params = new URLSearchParams({ page: pg, page_size: 10, keyword });
+                const res = await fetch(`/api/llm/files?${params}`);
                 const data = await res.json();
-                if (!data.success || data.data.length === 0) {
-                    container.innerHTML = '<div class="empty-hint"><div class="icon">📁</div><p>暂无生成的文件</p><p style="font-size:13px;">在「用例生成」标签页生成用例后会自动保存 xlsx 文件</p></div>';
+                if (!data.success || data.total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">暂无文件</td></tr>';
+                    document.getElementById('xlsxPagination').innerHTML = '';
                     return;
                 }
-                container.innerHTML = data.data.map(f => `
-                    <div class="file-item">
-                        <div class="file-info">
-                            <div class="file-name">📊 ${f.filename}</div>
-                            <div class="file-meta">${f.created_at} · ${(f.size/1024).toFixed(1)} KB</div>
-                        </div>
-                        <div class="file-actions">
+                tbody.innerHTML = data.data.map(f => `
+                    <tr>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">📊 ${f.filename}</td>
+                        <td>${(f.size/1024).toFixed(1)} KB</td>
+                        <td>${f.created_at}</td>
+                        <td>
                             <button class="btn btn-primary btn-small" onclick="previewFile('${f.filename}')">预览</button>
                             <button class="btn btn-success btn-small" onclick="downloadFile('${f.filename}')">下载</button>
                             <button class="btn btn-warning btn-small" onclick="importFromFile('${f.filename}')">导入</button>
-                        </div>
-                    </div>
+                            <button class="btn btn-danger btn-small" onclick="deleteXlsxFile('${f.filename}')">删除</button>
+                        </td>
+                    </tr>
                 `).join('');
+                renderPagination('xlsxPagination', data.page, data.total_pages, 'loadFiles');
             } catch (e) {
-                container.innerHTML = '<div class="empty-hint">加载失败</div>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ff4d4f;">加载失败</td></tr>';
             }
+        }
+
+        async function loadCsvFiles(page) {
+            const keyword = document.getElementById('csvSearchInput').value;
+            const tbody = document.getElementById('csvFileTableBody');
+            const pg = page || csvCurrentPage;
+            csvCurrentPage = pg;
+            try {
+                const params = new URLSearchParams({ page: pg, page_size: 10, keyword });
+                const res = await fetch(`/api/llm/csv/files?${params}`);
+                const data = await res.json();
+                if (!data.success || data.total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">暂无文件</td></tr>';
+                    document.getElementById('csvPagination').innerHTML = '';
+                    return;
+                }
+                tbody.innerHTML = data.data.map(f => `
+                    <tr>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">📋 ${f.filename}</td>
+                        <td>${(f.size/1024).toFixed(1)} KB</td>
+                        <td>${f.created_at}</td>
+                        <td>
+                            <button class="btn btn-success btn-small" onclick="downloadCsvFile('${f.filename}')">下载</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteCsvFile('${f.filename}')">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+                renderPagination('csvPagination', data.page, data.total_pages, 'loadCsvFiles');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ff4d4f;">加载失败</td></tr>';
+            }
+        }
+
+        function renderPagination(containerId, currentPage, totalPages, callbackName) {
+            if (totalPages <= 1) {
+                document.getElementById(containerId).innerHTML = '';
+                return;
+            }
+            let html = `<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;">`;
+            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>◀</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    html += `<button class="btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'} btn-small" onclick="${callbackName}(${i})">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    html += `<span style="color:#999;">...</span>`;
+                }
+            }
+            
+            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>▶</button>`;
+            html += `<span style="margin-left:8px;font-size:13px;color:#666;">共 ${totalPages} 页</span>`;
+            html += `</div>`;
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+        async function deleteXlsxFile(filename) {
+            if (!confirm(`确定删除文件 ${filename} 吗？`)) return;
+            try {
+                const res = await fetch(`/api/llm/files/${filename}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('删除成功');
+                    loadFiles(xlsxCurrentPage);
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+
+        async function deleteCsvFile(filename) {
+            if (!confirm(`确定删除文件 ${filename} 吗？`)) return;
+            try {
+                const res = await fetch(`/api/llm/csv/files/${filename}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    alert('删除成功');
+                    loadCsvFiles(csvCurrentPage);
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+
+        function downloadCsvFile(filename) {
+            window.open(`/api/llm/csv/files/${filename}`, '_blank');
         }
 
         function downloadFile(filename) {

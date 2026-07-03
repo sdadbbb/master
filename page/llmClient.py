@@ -14,7 +14,7 @@ class LLMClient:
         config = FileUtil.read_yaml(FileUtil.get_config_path())
         llm_config = config.get('llm', {})
         self.api_key = llm_config.get('api_key', '')
-        self.base_url = llm_config.get('base_url', 'https://api.openai.com/v1').rstrip('/')
+        self.base_url = llm_config.get('base_url', 'https://api.openai.com').rstrip('/')
         self.model = llm_config.get('model', 'gpt-4o-mini')
         self.timeout = llm_config.get('timeout', 120)
         self.max_tokens = llm_config.get('max_tokens')

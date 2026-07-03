@@ -17,6 +17,14 @@ CASE_GENERATION_SYSTEM_PROMPT = """你是一名资深测试工程师，擅长根
 
 你需要分析用户提供的需求文档，输出严格的 JSON 格式结果，不要输出任何 JSON 以外的内容。
 
+【用例类型智能判断规则】
+你需要根据用户需求智能判断需要生成哪些类型的测试用例：
+- 如果用户明确要求"只生成功能测试用例"、"生成功能测试用例"、"功能测试"等，或者上传了CSV模板，那么只生成功能测试用例，api_cases和ui_cases设为空数组[]
+- 如果用户明确要求"生成接口测试用例"、"API测试"等，那么只生成接口测试用例，ui_cases和function_cases设为空数组[]
+- 如果用户明确要求"生成UI测试用例"、"界面测试"等，那么只生成UI测试用例，api_cases和function_cases设为空数组[]
+- 如果用户没有明确指定类型，默认生成所有类型的测试用例（接口、UI、功能）
+- 如果需求文档内容只涉及某一类测试（如纯后端API文档），则只生成对应类型的用例
+
 输出 JSON 结构如下：
 {
   "requirements_analysis": "需求拆分与分析说明（Markdown格式）",
@@ -54,6 +62,26 @@ CASE_GENERATION_SYSTEM_PROMPT = """你是一名资深测试工程师，擅长根
         {"action": "assert_text_exists", "params": {"text": "欢迎"}}
       ]
     }
+  ],
+  "function_cases": [
+    {
+      "module": "需求模块名",
+      "name": "用例名称",
+      "description": "用例描述",
+      "priority": "高/中/低",
+      "precondition": "前置条件（如：用户已登录、数据已准备）",
+      "test_steps": [
+        "步骤1：操作描述",
+        "步骤2：操作描述",
+        "步骤3：操作描述"
+      ],
+      "expected_result": "预期结果描述",
+      "actual_result": "",
+      "status": "未执行",
+      "executor": "",
+      "execute_time": "",
+      "remarks": ""
+    }
   ]
 }
 
@@ -66,7 +94,9 @@ wait_element, wait, assert_text_exists, get_element_text
 1. 根据需求合理拆分模块，每个功能点至少覆盖正向和异常场景
 2. 接口用例的 assert 必须包含 status_code
 3. UI 用例 steps 要具体可执行
-4. 如果需求不涉及某类测试，对应数组可为空
+4. 功能测试用例需要包含完整的测试步骤和预期结果，便于手动执行
+5. 如果需求不涉及某类测试，对应数组必须设为空数组[]
+6. 严格按照用户明确要求的用例类型生成，不要生成用户未要求的类型
 """
 
 
@@ -151,11 +181,13 @@ class LLMCaseGenerator:
             result['api_cases'] = []
         if 'ui_cases' not in result:
             result['ui_cases'] = []
+        if 'function_cases' not in result:
+            result['function_cases'] = []
         if 'requirements_analysis' not in result:
             result['requirements_analysis'] = '未提供需求分析'
 
         _, filename = self.xlsx_manager.save_cases_to_xlsx(result)
-        logger.info(f"生成测试用例: API {len(result['api_cases'])} 个, UI {len(result['ui_cases'])} 个, 文件: {filename}")
+        logger.info(f"生成测试用例: API {len(result['api_cases'])} 个, UI {len(result['ui_cases'])} 个, 功能 {len(result['function_cases'])} 个, 文件: {filename}")
 
         return result, filename
 

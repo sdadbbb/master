@@ -435,6 +435,10 @@ def execute_get_ui_test_results(args):
         return {'success': False, 'error': str(e)}
 
 
+def execute_picture_tools():
+    pass
+
+
 def execute_get_test_result_detail(args):
     """获取指定测试任务的详细执行结果"""
     try:
