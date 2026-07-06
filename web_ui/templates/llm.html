@@ -785,18 +785,18 @@
 <body>
     <div class="top-bar">
         <div>
-            <h1>🤖 AI 智能测试助手</h1>
+            <h1>AI 智能测试助手</h1>
             <div class="status" id="llmStatus">检查配置中...</div>
         </div>
         <div style="display:flex;gap:10px;">
-            <button class="btn btn-secondary" onclick="window.location.href='/'">🏠 返回主页</button>
+            <button class="btn btn-secondary" onclick="window.location.href='/'">返回主页</button>
         </div>
     </div>
 
     <div class="main-layout">
         <div class="sidebar">
             <div class="sidebar-header">
-                <button class="btn btn-primary" style="width:100%;" onclick="newChat()">➕ 新对话</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="newChat()">新对话</button>
             </div>
             <div class="session-list" id="sessionList">
                 <div class="empty-hint" style="padding:20px;">暂无对话</div>
@@ -805,17 +805,16 @@
 
         <div class="content-area">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('chat')">💬 对话</button>
-                <button class="tab" onclick="switchTab('generate')">📝 用例生成</button>
-                <button class="tab" onclick="switchTab('files')">📁 生成文件</button>
-                <button class="tab" onclick="switchTab('analysis')">🔍 用例分析</button>
+                <button class="tab active" onclick="switchTab('chat')">对话</button>
+                <button class="tab" onclick="switchTab('generate')">用例生成</button>
+                <button class="tab" onclick="switchTab('files')">生成文件</button>
+                <button class="tab" onclick="switchTab('analysis')">用例分析</button>
             </div>
 
             <!-- 对话面板 -->
             <div class="tab-panel active" id="chat-panel">
                 <div class="chat-messages" id="chatMessages">
                     <div class="empty-hint">
-                        <div class="icon">🤖</div>
                         <p>开始与 AI 测试助手对话</p>
                         <p style="font-size:13px;margin-top:8px;">可咨询测试方案、用例设计等问题</p>
                     </div>
@@ -832,22 +831,21 @@
                 <div class="generate-panel">
                     <!-- 智能生成区域 -->
                     <div class="card" style="border: 2px solid #667eea; background: linear-gradient(135deg, #f0f5ff 0%, #ffffff 100%);">
-                        <h3>🤖 AI 智能生成（Function Calling）</h3>
+                        <h3>AI 智能生成（Function Calling）</h3>
                         <p style="font-size:13px;color:#666;margin-bottom:12px;">直接描述需求，AI 会自动分析并生成测试用例保存到系统</p>
                         <textarea class="requirement-input" id="smartRequirementText" placeholder="例如：&#10;实现用户登录功能，支持用户名密码登录，登录成功后跳转到首页，失败时显示错误提示" rows="4"></textarea>
                         <div style="margin-top:8px;">
                             <input type="text" id="smartExtraPrompt" placeholder="额外要求（可选），例如：请覆盖异常场景" style="width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;">
                         </div>
                         <div class="action-bar" style="margin-top:12px;">
-                            <button class="btn btn-primary" onclick="smartGenerate()" id="smartGenerateBtn">🚀 AI 智能生成</button>
+                            <button class="btn btn-primary" onclick="smartGenerate()" id="smartGenerateBtn">AI 智能生成</button>
                             <span id="smartStatus" style="font-size:13px;color:#999;margin-left:10px;"></span>
                         </div>
                     </div>
 
                     <div class="card">
-                        <h3>📄 上传需求文档</h3>
+                        <h3>上传需求文档</h3>
                         <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                            <div style="font-size:32px;margin-bottom:8px;">📎</div>
                             <p>点击或拖拽上传需求文档</p>
                             <p style="font-size:12px;margin-top:4px;">支持 txt、md、docx、doc 格式</p>
                         </div>
@@ -856,22 +854,22 @@
                     </div>
 
                     <div class="card">
-                        <h3>✏️ 或直接输入需求描述</h3>
+                        <h3>或直接输入需求描述</h3>
                         <textarea class="requirement-input" id="requirementText" placeholder="在此输入需求描述，例如：&#10;系统需要实现用户登录功能，支持用户名密码登录，登录成功后跳转到首页..."></textarea>
                         <div class="action-bar">
-                            <button class="btn btn-primary" onclick="generateCases()" id="generateBtn">🚀 生成测试用例</button>
-                            <button class="btn btn-success" onclick="importCases()" id="importBtn" disabled>📥 导入平台</button>
-                            <button class="btn btn-warning" onclick="runCases()" id="runBtn" disabled>▶️ 执行用例</button>
+                            <button class="btn btn-primary" onclick="generateCases()" id="generateBtn">生成测试用例</button>
+                            <button class="btn btn-success" onclick="importCases()" id="importBtn" disabled>导入平台</button>
+                            <button class="btn btn-warning" onclick="runCases()" id="runBtn" disabled>执行用例</button>
                         </div>
                     </div>
 
                     <div id="generateResult" style="display:none;">
                         <div class="card">
-                            <h3>📊 需求分析</h3>
+                            <h3>需求分析</h3>
                             <div class="analysis-box" id="analysisContent"></div>
                         </div>
                         <div class="card">
-                            <h3>📋 生成的测试用例</h3>
+                            <h3>生成的测试用例</h3>
                             <div class="summary-cards" id="summaryCards"></div>
                             <div id="casesPreview"></div>
                         </div>
@@ -884,10 +882,10 @@
                 <div class="file-list">
                     <!-- XLSX 文件管理 -->
                     <div class="card">
-                        <h3>📊 测试用例文件管理</h3>
+                        <h3>测试用例文件管理</h3>
                         <div class="search-bar">
                             <input type="text" id="xlsxSearchInput" placeholder="搜索文件名..." style="flex:1;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;">
-                            <button class="btn btn-primary" onclick="loadFiles()">🔍 搜索</button>
+                            <button class="btn btn-primary" onclick="loadFiles()">搜索</button>
                         </div>
                         <div class="table-container">
                             <table class="file-table">
@@ -909,10 +907,10 @@
 
                     <!-- CSV 文件管理 -->
                     <div class="card" style="margin-top:16px;">
-                        <h3>📋 功能测试用例CSV文件</h3>
+                        <h3>功能测试用例CSV文件</h3>
                         <div class="search-bar">
                             <input type="text" id="csvSearchInput" placeholder="搜索文件名..." style="flex:1;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;">
-                            <button class="btn btn-primary" onclick="loadCsvFiles()">🔍 搜索</button>
+                            <button class="btn btn-primary" onclick="loadCsvFiles()">搜索</button>
                         </div>
                         <div class="table-container">
                             <table class="file-table">
@@ -942,7 +940,7 @@
                         <div class="analysis-left-inner">
                             <!-- 头部横幅 -->
                             <div class="analysis-header-banner">
-                                <h2>📋 用例分析工作台</h2>
+                                <h2>用例分析工作台</h2>
                                 <p>选择用例 → 配置分析参数 → 开始分析</p>
                             </div>
 
@@ -950,9 +948,9 @@
                             <div style="margin-bottom:4px;">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                     <span style="font-size:13px;font-weight:600;color:#374151;">选择要分析的用例</span>
-                                    <button class="history-section-title" style="border:1px solid #e0e4ea;border-radius:6px;padding:3px 10px;font-size:12px;color:#6b7280;cursor:pointer;background:#fff;font-family:inherit;" onclick="loadAllCases()" id="refreshCasesBtn">🔄 刷新</button>
+                                    <button class="history-section-title" style="border:1px solid #e0e4ea;border-radius:6px;padding:3px 10px;font-size:12px;color:#6b7280;cursor:pointer;background:#fff;font-family:inherit;" onclick="loadAllCases()" id="refreshCasesBtn">刷新</button>
                                 </div>
-                                <div id="caseCount" style="font-size:12px;color:#9ca3af;margin-bottom:8px;">⏳ 点击刷新加载用例</div>
+                                <div id="caseCount" style="font-size:12px;color:#9ca3af;margin-bottom:8px;">点击刷新加载用例</div>
 
                                 <!-- 类型切换标签 -->
                                 <div class="case-tab-group">
@@ -977,11 +975,11 @@
                             <!-- 分析设置 -->
                             <div class="settings-card">
                                 <div style="margin-bottom:10px;">
-                                    <label class="field-label">📝 分析名称（可选）</label>
+                                    <label class="field-label">分析名称（可选）</label>
                                     <input type="text" class="field-input" id="analysisNameInput" placeholder="留空自动命名：年月日_第N次分析">
                                 </div>
                                 <div style="margin-bottom:10px;">
-                                    <label class="field-label">💬 附加要求（可选）</label>
+                                    <label class="field-label">附加要求（可选）</label>
                                     <textarea class="field-textarea" id="analysisExtraPrompt" placeholder="例如：无需考虑性能，只考虑功能是否合理" rows="2"></textarea>
                                 </div>
                                 <button class="analyze-btn-primary" onclick="startSelectedAnalysis()" id="startAnalyzeBtn">
@@ -994,7 +992,7 @@
                             <div>
                                 <div class="history-section-title">
                                     <h3>历史分析结果</h3>
-                                    <button class="refresh-btn" onclick="loadAnalysisHistory()">🔄 刷新</button>
+                                    <button class="refresh-btn" onclick="loadAnalysisHistory()">刷新</button>
                                 </div>
                                 <div class="history-list" id="analysisHistoryList">
                                     <div class="empty-state">暂无分析记录</div>
@@ -1007,7 +1005,6 @@
                     <div class="analysis-right" id="analysisRightPanel">
                         <!-- 占位提示 -->
                         <div class="result-placeholder" id="analysisResultPlaceholder">
-                            <div class="ph-icon">🔍</div>
                             <h3>开始一次新的分析</h3>
                             <p>在左侧勾选用例，设置分析参数后点击「开始分析」</p>
                             <p style="margin-top:4px;font-size:12px;">或点击历史记录查看以往的分析结果</p>
@@ -1019,7 +1016,7 @@
                                 <h3 class="rh-title" id="currentAnalysisTitle">分析结果</h3>
                                 <div style="display:flex;align-items:center;gap:8px;">
                                     <span class="rh-time" id="currentAnalysisTime"></span>
-                                    <button class="rh-close-btn" onclick="closeAnalysisResult()">✕ 关闭</button>
+                                    <button class="rh-close-btn" onclick="closeAnalysisResult()">关闭</button>
                                 </div>
                             </div>
 
@@ -1064,7 +1061,7 @@
 
                             <!-- 原始分析内容（JSON解析失败时显示，或附加显示） -->
                             <div class="result-block">
-                                <div class="rb-title">📄 完整分析内容</div>
+                                <div class="rb-title">完整分析内容</div>
                                 <div class="rb-content" id="rawAnalysisContent" style="max-height:400px;overflow-y:auto;"></div>
                             </div>
                         </div>
@@ -1095,7 +1092,7 @@
                 if (data.success && data.data.configured) {
                     el.textContent = `已连接 | 模型: ${data.data.model}`;
                 } else {
-                    el.textContent = '⚠️ 请先在 config/config.yml 中配置 llm.api_key';
+                    el.textContent = '请先在 config/config.yml 中配置 llm.api_key';
                     el.classList.add('error');
                 }
             } catch (e) {
@@ -1126,7 +1123,7 @@
             list.innerHTML = data.data.map(s => `
                 <div class="session-item ${s.session_id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.session_id}')">
                     <span>${s.title}</span>
-                    <button class="del-btn" onclick="event.stopPropagation();deleteSession('${s.session_id}')">✕</button>
+                    <button class="del-btn" onclick="event.stopPropagation();deleteSession('${s.session_id}')">×</button>
                 </div>
             `).join('');
         }
@@ -1134,7 +1131,7 @@
         async function newChat() {
             currentSessionId = null;
             document.getElementById('chatMessages').innerHTML = `
-                <div class="empty-hint"><div class="icon">🤖</div><p>开始新对话</p></div>`;
+                <div class="empty-hint"><p>开始新对话</p></div>`;
             document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
             document.getElementById('chatInput').focus();
         }
@@ -1166,7 +1163,7 @@
             const div = document.createElement('div');
             div.className = `message ${role}`;
             div.innerHTML = `
-                <div class="message-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-avatar">${role === 'user' ? '用户' : 'AI'}</div>
                 <div class="message-body">
                     <div class="message-content">${escapeHtml(content)}</div>
                     ${time ? `<div class="message-time">${time}</div>` : ''}
@@ -1202,15 +1199,15 @@
                     // 如果调用了工具，显示分析提示
                     if (data.data.tool_calls && data.data.tool_calls.length > 0) {
                         const toolNames = data.data.tool_calls.map(t => t.tool).join('、');
-                        reply = '📊 **已分析以下数据：** ' + toolNames + '\n\n---\n\n' + reply;
+                        reply = '**已分析以下数据：** ' + toolNames + '\n\n---\n\n' + reply;
                     }
                     appendMessage('assistant', reply);
                     loadSessions();
                 } else {
-                    appendMessage('assistant', '❌ ' + data.message);
+                    appendMessage('assistant', '错误：' + data.message);
                 }
             } catch (e) {
-                appendMessage('assistant', '❌ 请求失败: ' + e.message);
+                appendMessage('assistant', '请求失败: ' + e.message);
             } finally {
                 btn.disabled = false;
                 input.focus();
@@ -1238,21 +1235,21 @@
             formData.append('file', file);
             const info = document.getElementById('uploadInfo');
             info.style.display = 'block';
-            info.textContent = '⏳ 上传中...';
+            info.textContent = '上传中...';
 
             try {
                 const res = await fetch('/api/llm/upload', { method: 'POST', body: formData });
                 const data = await res.json();
                 if (data.success) {
                     uploadedFile = data.data.filename;
-                    info.innerHTML = `✅ 已上传: <strong>${data.data.original_name}</strong> (${data.data.content_length} 字符)`;
+                    info.innerHTML = `已上传: <strong>${data.data.original_name}</strong> (${data.data.content_length} 字符)`;
                 } else {
                     info.style.color = '#ff4d4f';
-                    info.textContent = '❌ ' + data.message;
+                    info.textContent = '错误：' + data.message;
                 }
             } catch (e) {
                 info.style.color = '#ff4d4f';
-                info.textContent = '❌ 上传失败';
+                info.textContent = '上传失败';
             }
         }
 
@@ -1266,7 +1263,7 @@
 
             const btn = document.getElementById('generateBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ 生成中，请耐心等待...';
+            btn.textContent = '生成中，请耐心等待...';
 
             try {
                 const res = await fetch('/api/llm/generate', {
@@ -1292,7 +1289,7 @@
                 alert('生成失败: ' + e.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = '🚀 生成测试用例';
+                btn.textContent = '生成测试用例';
             }
         }
 
@@ -1308,14 +1305,14 @@
 
             let html = '';
             if (data.api_cases.length) {
-                html += '<h4 style="margin:12px 0 8px;">🔌 接口测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>方法</th><th>URL</th><th>优先级</th></tr>';
+                html += '<h4 style="margin:12px 0 8px;">接口测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>方法</th><th>URL</th><th>优先级</th></tr>';
                 data.api_cases.forEach(c => {
                     html += `<tr><td>${c.module||'-'}</td><td>${c.name}</td><td><span class="badge badge-api">${c.request?.method||'GET'}</span></td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${c.request?.url||'-'}</td><td><span class="badge badge-${c.priority==='高'?'high':'mid'}">${c.priority||'中'}</span></td></tr>`;
                 });
                 html += '</table>';
             }
             if (data.ui_cases.length) {
-                html += '<h4 style="margin:16px 0 8px;">🎨 UI测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>起始URL</th><th>步骤数</th><th>优先级</th></tr>';
+                html += '<h4 style="margin:16px 0 8px;">UI测试用例</h4><table class="case-table"><tr><th>模块</th><th>名称</th><th>起始URL</th><th>步骤数</th><th>优先级</th></tr>';
                 data.ui_cases.forEach(c => {
                     html += `<tr><td>${c.module||'-'}</td><td>${c.name}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${c.url||'-'}</td><td>${(c.steps||[]).length}</td><td><span class="badge badge-${c.priority==='高'?'high':'mid'}">${c.priority||'中'}</span></td></tr>`;
                 });
@@ -1345,7 +1342,7 @@
 
             const btn = document.getElementById('runBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ 执行中...';
+            btn.textContent = '执行中...';
 
             try {
                 const res = await fetch('/api/llm/run_cases', {
@@ -1365,7 +1362,7 @@
                     alert('执行失败: ' + data.message);
                 }
             } catch (e) { alert('执行失败: ' + e.message); }
-            finally { btn.disabled = false; btn.textContent = '▶️ 执行用例'; }
+            finally { btn.disabled = false; btn.textContent = '执行用例'; }
         }
 
         // ========== 文件列表 ==========
@@ -1389,7 +1386,7 @@
                 }
                 tbody.innerHTML = data.data.map(f => `
                     <tr>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">📊 ${f.filename}</td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">${f.filename}</td>
                         <td>${(f.size/1024).toFixed(1)} KB</td>
                         <td>${f.created_at}</td>
                         <td>
@@ -1422,7 +1419,7 @@
                 }
                 tbody.innerHTML = data.data.map(f => `
                     <tr>
-                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">📋 ${f.filename}</td>
+                        <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;">${f.filename}</td>
                         <td>${(f.size/1024).toFixed(1)} KB</td>
                         <td>${f.created_at}</td>
                         <td>
@@ -1443,7 +1440,7 @@
                 return;
             }
             let html = `<div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:12px;">`;
-            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>◀</button>`;
+            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>上一页</button>`;
             
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
@@ -1453,7 +1450,7 @@
                 }
             }
             
-            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>▶</button>`;
+            html += `<button class="btn btn-secondary btn-small" onclick="${callbackName}(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>`;
             html += `<span style="margin-left:8px;font-size:13px;color:#666;">共 ${totalPages} 页</span>`;
             html += `</div>`;
             document.getElementById(containerId).innerHTML = html;
@@ -1550,7 +1547,7 @@
             const status = document.getElementById('smartStatus');
             
             btn.disabled = true;
-            btn.textContent = '⏳ AI 分析中...';
+            btn.textContent = 'AI 分析中...';
             status.textContent = '正在调用 AI 分析需求并生成用例...';
             status.style.color = '#667eea';
             
@@ -1570,7 +1567,7 @@
                     const result = data.data;
                     
                     // 显示结果
-                    let message = `✅ AI 智能生成完成！\n\n`;
+                    let message = `AI 智能生成完成！\n\n`;
                     message += `工具调用次数: ${result.tool_calls_count}\n`;
                     message += `成功: ${result.success_count}, 失败: ${result.failed_count}\n\n`;
                     
@@ -1580,9 +1577,9 @@
                             if (toolResult.success) {
                                 const toolName = toolResult.tool.includes('api') ? '接口用例' : 'UI用例';
                                 const caseName = toolResult.result.case_name || '未命名';
-                                message += `  ${index + 1}. ✅ ${toolName}: ${caseName}\n`;
+                                message += `  ${index + 1}. ${toolName}: ${caseName}\n`;
                             } else {
-                                message += `  ${index + 1}. ❌ 失败: ${toolResult.result.error || '未知错误'}\n`;
+                                message += `  ${index + 1}. 失败: ${toolResult.result.error || '未知错误'}\n`;
                             }
                         });
                     }
@@ -1593,7 +1590,7 @@
                     
                     alert(message);
                     
-                    status.textContent = `✅ 成功生成 ${result.success_count} 个用例`;
+                    status.textContent = `成功生成 ${result.success_count} 个用例`;
                     status.style.color = '#52c41a';
                     
                     // 清空输入框
@@ -1602,16 +1599,16 @@
                     
                 } else {
                     alert('生成失败: ' + data.message);
-                    status.textContent = '❌ 生成失败';
+                    status.textContent = '生成失败';
                     status.style.color = '#ff4d4f';
                 }
             } catch (e) {
                 alert('请求失败: ' + e.message);
-                status.textContent = '❌ 请求失败';
+                status.textContent = '请求失败';
                 status.style.color = '#ff4d4f';
             } finally {
                 btn.disabled = false;
-                btn.textContent = '🚀 AI 智能生成';
+                btn.textContent = 'AI 智能生成';
                 
                 // 3秒后清除状态
                 setTimeout(() => {
@@ -1783,7 +1780,7 @@
             const progress = document.getElementById('analyzeProgress');
 
             btn.disabled = true;
-            btn.textContent = '⏳ 分析中，请耐心等待...';
+            btn.textContent = '分析中，请耐心等待...';
             progress.style.display = 'block';
             progress.textContent = '正在调用 AI 分析用例...';
             progress.style.color = '#667eea';
@@ -1806,20 +1803,20 @@
 
                 if (data.success) {
                     displayAnalysisResult(data.data);
-                    progress.textContent = `✅ 分析完成：${data.data.analysis_name}`;
+                    progress.textContent = `分析完成：${data.data.analysis_name}`;
                     progress.style.color = '#52c41a';
                     // 刷新历史列表
                     loadAnalysisHistory();
                 } else {
-                    progress.textContent = '❌ ' + data.message;
+                    progress.textContent = '错误：' + data.message;
                     progress.style.color = '#ff4d4f';
                 }
             } catch (e) {
-                progress.textContent = '❌ 请求失败: ' + e.message;
+                progress.textContent = '请求失败: ' + e.message;
                 progress.style.color = '#ff4d4f';
             } finally {
                 btn.disabled = false;
-                btn.textContent = '🚀 开始分析选中的用例';
+                btn.textContent = '开始分析选中的用例';
                 setTimeout(() => { progress.style.display = 'none'; }, 5000);
             }
         }
@@ -1832,7 +1829,7 @@
             document.getElementById('analysisResultContent').style.display = 'block';
 
             // 设置标题和时间
-            document.getElementById('currentAnalysisTitle').textContent = '📊 ' + (data.analysis_name || '分析结果');
+            document.getElementById('currentAnalysisTitle').textContent = (data.analysis_name || '分析结果');
             document.getElementById('currentAnalysisTime').textContent = '';
 
             // 清空旧内容
@@ -1859,11 +1856,11 @@
                 const issues = analysisJson.issues_found || [];
                 const issuesContainer = document.getElementById('jsonIssues');
                 if (issues.length === 0) {
-                    issuesContainer.innerHTML = '<p style="color:#999;padding:8px;">未发现明显问题 ✅</p>';
+                    issuesContainer.innerHTML = '<p style="color:#999;padding:8px;">未发现明显问题</p>';
                 } else {
                     issuesContainer.innerHTML = issues.map(iss => `
                         <div class="issue-card">
-                            <div class="ic-name">📌 ${escapeHtml(iss.case_name || '')}</div>
+                            <div class="ic-name">${escapeHtml(iss.case_name || '')}</div>
                             <div class="ic-detail"><strong>问题：</strong>${escapeHtml(iss.issue || '')}</div>
                             <div class="ic-suggest"><strong>建议：</strong>${escapeHtml(iss.suggestion || '')}</div>
                         </div>
@@ -1929,12 +1926,11 @@
 
                 container.innerHTML = data.data.map(item => `
                     <div class="history-item" onclick="viewAnalysisResult('${item.filename}')">
-                        <div class="h-icon">📊</div>
                         <div class="h-info">
                             <div class="h-name">${escapeHtml(item.analysis_name)}</div>
                             <div class="h-meta">${item.created_at || ''} · API ${item.api_case_count} / UI ${item.ui_case_count}</div>
                         </div>
-                        <button class="h-del" onclick="event.stopPropagation();deleteAnalysisResult('${item.filename}')" title="删除">🗑️</button>
+                        <button class="h-del" onclick="event.stopPropagation();deleteAnalysisResult('${item.filename}')" title="删除"></button>
                     </div>
                 `).join('');
             } catch (e) {

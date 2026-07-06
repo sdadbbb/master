@@ -494,23 +494,23 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 UI自动化测试</h1>
+            <h1>UI自动化测试</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">🏠 返回主页</button>
-                <button class="btn btn-primary" onclick="saveCase()">💾 保存用例</button>
-                <button class="btn btn-success" onclick="executeCase()">▶️ 执行测试</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">返回主页</button>
+                <button class="btn btn-primary" onclick="saveCase()">保存用例</button>
+                <button class="btn btn-success" onclick="executeCase()">执行测试</button>
             </div>
         </div>
         
         <div class="main-content">
             <div class="sidebar">
-                <h3>🛠️ 可用操作</h3>
+                <h3>可用操作</h3>
                 <div id="actionsList"></div>
             </div>
             
             <div class="pipeline-area">
                 <div class="case-info">
-                    <h3>📝 用例信息</h3>
+                    <h3>用例信息</h3>
                     <div class="form-group">
                         <label>用例名称 <span style="color: #ff4d4f">*</span></label>
                         <input type="text" id="caseName" placeholder="请输入用例名称">
@@ -764,7 +764,7 @@
             if (steps.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-icon"></div>
                         <p>从左侧拖拽操作到此处，构建你的测试流程</p>
                     </div>
                 `;
@@ -785,8 +785,8 @@
                                     <span>${action.name}</span>
                                 </div>
                                 <div class="step-actions">
-                                    <button class="step-action-btn btn-edit" onclick="editStep(${index})">✏️ 编辑</button>
-                                    <button class="step-action-btn btn-delete" onclick="deleteStep(${index})">🗑️ 删除</button>
+                                    <button class="step-action-btn btn-edit" onclick="editStep(${index})">编辑</button>
+                                    <button class="step-action-btn btn-delete" onclick="deleteStep(${index})">删除</button>
                                 </div>
                             </div>
                             <div class="step-params">
@@ -901,7 +901,7 @@
             }
             
             if (confirm('确定要执行这个测试用例吗？')) {
-                document.getElementById('executionResult').innerHTML = '<p style="text-align:center;padding:20px;">⏳ 执行中...</p>';
+                document.getElementById('executionResult').innerHTML = '<p style="text-align:center;padding:20px;">执行中...</p>';
                 
                 fetch('/api/run_ui_test_case', {
                     method: 'POST',
@@ -923,12 +923,12 @@
         function renderExecutionResult(result) {
             const container = document.getElementById('executionResult');
             const statusClass = result.passed ? 'status-passed' : 'status-failed';
-            const statusText = result.passed ? '✅ 测试通过' : '❌ 测试失败';
+            const statusText = result.passed ? '测试通过' : '测试失败';
             
             let html = `
                 <div class="execution-result">
                     <div class="result-header">
-                        <h3>📊 执行结果</h3>
+                        <h3>执行结果</h3>
                         <span class="result-status ${statusClass}">${statusText}</span>
                     </div>
             `;
@@ -940,10 +940,9 @@
             html += '<div>';
             result.steps_results.forEach(stepResult => {
                 const stepClass = stepResult.passed ? 'passed' : 'failed';
-                const icon = stepResult.passed ? '✅' : '❌';
                 html += `
                     <div class="step-result ${stepClass}">
-                        <strong>${icon} 步骤 ${stepResult.step_index}: ${stepResult.action_name}</strong>
+                        <strong>步骤 ${stepResult.step_index}: ${stepResult.action_name}</strong>
                         <div style="margin-top: 5px; font-size: 13px;">${stepResult.message}</div>
                     </div>
                 `;

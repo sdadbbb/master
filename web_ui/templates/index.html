@@ -222,14 +222,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 自动化测试平台</h1>
+            <h1>自动化测试平台</h1>
             <p>选择测试用例并执行，实时查看测试结果和报告</p>
         </div>
 
         <div class="test-list" id="testList">
             <div class="section-title">
-                <span>📋 Pytest测试用例</span>
-                <span class="section-badge" id="pytestCount">0 个</span>
+                <span>Pytest测试用例</span>
+                    <span class="section-badge" id="pytestCount">0 个</span>
             </div>
             <p style="color: #666;">加载中...</p>
         </div>
@@ -237,7 +237,7 @@
         <div style="margin-top: 30px;">
             <div class="test-list">
                 <div class="section-title">
-                    <span>📊 最新测试报告</span>
+                    <span>最新测试报告</span>
                 </div>
                 <div id="latestReports">
                     <p style="color: #666;">加载中...</p>
@@ -248,23 +248,23 @@
         <div style="margin-top: 30px;">
             <div class="test-list">
                 <div class="section-title">
-                    <span>🚀 快速链接</span>
+                    <span>快速链接</span>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <a href="/reports" class="btn btn-primary" style="padding: 12px 25px; text-decoration: none;">
-                        📊 查看所有报告
+                        查看所有报告
                     </a>
                     <a href="/screenshots" class="btn btn-success" style="padding: 12px 25px; text-decoration: none;">
-                        📸 查看所有截图
+                        查看所有截图
                     </a>
                     <a href="/api_tests" class="btn btn-info" style="padding: 12px 25px; text-decoration: none;">
-                        🔌 接口自动化测试
+                        接口自动化测试
                     </a>
                     <a href="/api/ui_test_cases_list" class="btn btn-primary" style="padding: 12px 25px; text-decoration: none; background: #764ba2;">
-                        🎨 UI流水线测试
+                        UI流水线测试
                     </a>
                     <a href="/llm" class="btn btn-primary" style="padding: 12px 25px; text-decoration: none; background: #e6a23c;">
-                        🤖 AI智能测试助手
+                        AI智能测试助手
                     </a>
                 </div>
             </div>
@@ -273,7 +273,7 @@
 
     <div id="emailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:30px; border-radius:10px; width:400px; max-width:90%;">
-            <h3 style="margin-bottom:20px;">📧 发送邮件</h3>
+            <h3 style="margin-bottom:20px;">发送邮件</h3>
             <p style="margin-bottom:10px; color:#666;" id="emailReportName"></p>
             <label style="display:block; margin-bottom:5px; font-weight:bold;">收件人邮箱：</label>
             <textarea id="emailRecipients" rows="3" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; margin-bottom:15px;" placeholder="多个邮箱用逗号分隔，例如：test1@example.com, test2@example.com"></textarea>
@@ -324,7 +324,7 @@
             const container = document.getElementById('testList');
             let html = `
                 <div class="section-title">
-                    <span>📋 Pytest测试用例</span>
+                <span>Pytest测试用例</span>
                     <span class="section-badge">${tests.length} 个</span>
                 </div>
             `;
@@ -338,13 +338,13 @@
                             <div class="test-name">${test.name}</div>
                             <div class="test-actions">
                                 <button class="btn btn-primary" onclick="runTest('${test.name}')">
-                                    ▶️ 执行测试
+                                    执行测试
                                 </button>
                                 <button class="btn btn-success" onclick="goToReports()">
-                                    📊 查看所有报告
+                                    查看所有报告
                                 </button>
                                 <button class="btn btn-danger" onclick="deletePytestTest('${test.name}')">
-                                    🗑️ 删除用例
+                                    删除用例
                                 </button>
                             </div>
                             <div id="status_${test.name}" style="margin-bottom: 10px;"></div>
@@ -353,7 +353,7 @@
                             </div>
                             <div id="report_link_${test.name}" style="display: none;">
                                 <a href="#" class="report-link" onclick="viewLatestReport(); return false;">
-                                    📄 查看刚才生成的报告
+                                    查看刚才生成的报告
                                 </a>
                             </div>
                         </div>
@@ -381,7 +381,7 @@
                 html += `
                     <div style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
                         <div style="font-weight: bold; margin-bottom: 5px;">
-                            📄 ${report.filename}
+                            ${report.filename}
                         </div>
                         <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
                             ${formatSize(report.size)} | ${report.created_time}
@@ -390,12 +390,12 @@
                            class="btn btn-primary"
                            target="_blank"
                            style="padding: 6px 15px; font-size: 13px;">
-                            👁️ 查看
+                            查看
                         </a>
                         <button onclick="openEmailModal('${report.filename}')"
                                 class="btn btn-email"
                                 style="padding: 6px 15px; font-size: 13px; margin-left: 10px;">
-                            📧 发送邮件
+                            发送邮件
                         </button>
                     </div>
                 `;
@@ -455,13 +455,13 @@
 
                     // 1. 处理等待本地领取的状态
                     if (task.status === 'waiting_local') {
-                        statusDiv.innerHTML = '<span class="status-running">⏳ 等待本地代理领取任务...</span>';
+                        statusDiv.innerHTML = '<span class="status-running">等待本地代理领取任务...</span>';
                         return;
                     }
 
                     // 2. 处理本地正在执行的状态
                     if (task.status === 'executing') {
-                        statusDiv.innerHTML = '<span class="status-running">💻 本地代理正在执行中...</span>';
+                        statusDiv.innerHTML = '<span class="status-running">本地代理正在执行中...</span>';
                         resultPre.innerText = '浏览器已在你的本地电脑启动，请勿关闭...';
                         return;
                     }
@@ -469,7 +469,7 @@
                     // 3. 处理完成状态
                     if (task.status === 'completed') {
                         clearInterval(window.currentPollInterval);
-                        statusDiv.innerHTML = '<span class="status-success">✅ 测试通过</span>';
+                        statusDiv.innerHTML = '<span class="status-success">测试通过</span>';
                         resultPre.innerText = task.output || '执行成功';
                         reportLinkDiv.style.display = 'block';
                         setTimeout(loadReports, 1000);
@@ -478,7 +478,7 @@
                     // 4. 处理错误状态
                     else if (task.status === 'error') {
                         clearInterval(window.currentPollInterval);
-                        statusDiv.innerHTML = '<span class="status-failed">❌ 执行失败</span>';
+                        statusDiv.innerHTML = '<span class="status-failed">执行失败</span>';
                         resultPre.innerText = task.output;
                     }
                 })
@@ -557,7 +557,7 @@
                 btn.disabled = false;
                 btn.textContent = '发送';
                 console.error('发送邮件失败:', error);
-                alert('❌ 发送邮件失败，请稍后重试');
+                alert('发送邮件失败，请稍后重试');
             });
         }
 

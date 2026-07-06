@@ -192,7 +192,7 @@ def execute_generate_api_test_case(args):
         }
         
         saved_case = api_manager.add_test(test_data)
-        logger.info(f"✅ 已生成接口用例: {saved_case['name']} (ID: {saved_case['id']})")
+        logger.info(f"[成功] 已生成接口用例: {saved_case['name']} (ID: {saved_case['id']})")
         
         return {
             'success': True,
@@ -201,7 +201,7 @@ def execute_generate_api_test_case(args):
             'message': f'接口用例已保存: {saved_case["name"]}'
         }
     except Exception as e:
-        logger.error(f"❌ 生成接口用例失败: {str(e)}")
+        logger.error(f"[失败] 生成接口用例失败: {str(e)}")
         return {
             'success': False,
             'error': str(e)
@@ -219,7 +219,7 @@ def execute_generate_ui_test_case(args):
         }
         
         saved_case = ui_manager.add_case(case_data)
-        logger.info(f"✅ 已生成UI用例: {saved_case['name']} (ID: {saved_case['id']})")
+        logger.info(f"[成功] 已生成UI用例: {saved_case['name']} (ID: {saved_case['id']})")
         
         return {
             'success': True,
@@ -228,7 +228,7 @@ def execute_generate_ui_test_case(args):
             'message': f'UI用例已保存: {saved_case["name"]}'
         }
     except Exception as e:
-        logger.error(f"❌ 生成UI用例失败: {str(e)}")
+        logger.error(f"[失败] 生成UI用例失败: {str(e)}")
         return {
             'success': False,
             'error': str(e)
@@ -246,7 +246,7 @@ def execute_batch_generate_api_cases(args):
         results.append(result)
     
     success_count = sum(1 for r in results if r.get('success'))
-    logger.info(f"✅ 批量生成完成: {success_count}/{len(cases)} 个接口用例成功")
+    logger.info(f"[成功] 批量生成完成: {success_count}/{len(cases)} 个接口用例成功")
     
     return {
         'success': True,
@@ -268,7 +268,7 @@ def execute_batch_generate_ui_cases(args):
         results.append(result)
     
     success_count = sum(1 for r in results if r.get('success'))
-    logger.info(f"✅ 批量生成完成: {success_count}/{len(cases)} 个UI用例成功")
+    logger.info(f"[成功] 批量生成完成: {success_count}/{len(cases)} 个UI用例成功")
     
     return {
         'success': True,

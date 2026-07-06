@@ -397,10 +397,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔌 接口自动化测试</h1>
+            <h1>接口自动化测试</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">🏠 返回主页</button>
-                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新增接口用例</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'" style="margin-right: 10px;">返回主页</button>
+                <button class="btn btn-primary" onclick="openCreateModal()">新增接口用例</button>
             </div>
         </div>
         
@@ -413,14 +413,14 @@
             <div class="toolbar">
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="搜索测试用例名称或描述..." onkeyup="handleEnterSearch(event)">
-                    <button class="btn btn-primary btn-small" onclick="searchTests()">🔍 搜索</button>
+                    <button class="btn btn-primary btn-small" onclick="searchTests()">搜索</button>
                     <button class="btn btn-secondary btn-small" onclick="clearSearch()">清空</button>
                 </div>
                 <div class="toolbar-actions">
                     <span class="toolbar-hint">勾选后可批量操作</span>
-                    <button class="btn btn-warning btn-small" onclick="runBatchTests()" id="batchRunBtn" disabled title="请先勾选用例">▶️ 批量执行</button>
-                    <button class="btn btn-success btn-small" onclick="runAllTests()" id="executeAllBtn" title="执行当前列表全部用例">▶️ 执行全部</button>
-                    <button class="btn btn-danger btn-small" onclick="batchDeleteTests()" id="batchDeleteBtn" disabled title="请先勾选用例">🗑️ 批量删除</button>
+                    <button class="btn btn-warning btn-small" onclick="runBatchTests()" id="batchRunBtn" disabled title="请先勾选用例">批量执行</button>
+                    <button class="btn btn-success btn-small" onclick="runAllTests()" id="executeAllBtn" title="执行当前列表全部用例">执行全部</button>
+                    <button class="btn btn-danger btn-small" onclick="batchDeleteTests()" id="batchDeleteBtn" disabled title="请先勾选用例">批量删除</button>
                 </div>
             </div>
             <div class="table-container">
@@ -737,17 +737,17 @@
 
             if (selectedTests.size > 0) {
                 runBtn.disabled = false;
-                runBtn.textContent = `▶️ 批量执行 (${selectedTests.size})`;
+                runBtn.textContent = `批量执行 (${selectedTests.size})`;
                 runBtn.title = '执行已勾选的用例';
                 deleteBtn.disabled = false;
-                deleteBtn.textContent = `🗑️ 批量删除 (${selectedTests.size})`;
+                deleteBtn.textContent = `批量删除 (${selectedTests.size})`;
                 deleteBtn.title = '删除已勾选的用例';
             } else {
                 runBtn.disabled = true;
-                runBtn.textContent = '▶️ 批量执行';
+                runBtn.textContent = '批量执行';
                 runBtn.title = '请先勾选用例';
                 deleteBtn.disabled = true;
-                deleteBtn.textContent = '🗑️ 批量删除';
+                deleteBtn.textContent = '批量删除';
                 deleteBtn.title = '请先勾选用例';
             }
 
@@ -906,9 +906,9 @@
                 if (data.success) {
                     const result = data.data.result;
                     if (result.passed) {
-                        alert(`✅ 测试通过！\n耗时: ${result.response_time}`);
+                        alert(`测试通过！\n耗时: ${result.response_time}`);
                     } else {
-                        alert(`❌ 测试失败！\n错误: ${result.error}`);
+                        alert(`失败：测试失败！\n错误: ${result.error}`);
                     }
                     loadResults();
                 } else {
@@ -948,7 +948,7 @@
             const executeAllBtn = document.getElementById('executeAllBtn');
             runBtn.disabled = true;
             executeAllBtn.disabled = true;
-            runBtn.textContent = '⏳ 执行中...';
+            runBtn.textContent = '执行中...';
 
             try {
                 const response = await fetch('/api/run_batch_tests', {
@@ -1096,7 +1096,7 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                         <strong style="font-size: 16px;">${index + 1}. ${r.name}</strong>
                                         <span class="status-badge ${r.passed ? 'status-passed' : 'status-failed'}" style="font-size: 14px; padding: 6px 16px;">
-                                            ${r.passed ? '✓ 通过' : '✗ 失败'}
+                                            ${r.passed ? '通过' : '失败'}
                                         </span>
                                     </div>
 

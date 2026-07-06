@@ -184,9 +184,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 测试报告</h1>
+            <h1>测试报告</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="window.location.href='/'">🏠 返回主页</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">返回主页</button>
             </div>
         </div>
 
@@ -221,13 +221,13 @@
                         renderPagination(data.pagination);
                     } else {
                         document.getElementById('reportList').innerHTML =
-                            `<div class="empty">❌ ${data.message}</div>`;
+                            `<div class="empty">失败：${data.message}</div>`;
                     }
                 })
                 .catch(error => {
                     console.error('加载报告失败:', error);
                     document.getElementById('reportList').innerHTML =
-                        '<div class="empty">❌ 加载失败，请刷新重试</div>';
+                        '<div class="empty">加载失败，请刷新重试</div>';
                 });
         }
 
@@ -243,7 +243,7 @@
             reports.forEach(report => {
                 html += `
                     <div class="report-item">
-                        <div class="report-name">📄 ${report.filename}</div>
+                        <div class="report-name">${report.filename}</div>
                         <div class="report-info">
                             文件大小：${formatSize(report.size)} |
                             创建时间：${report.created_time}
@@ -251,7 +251,7 @@
                         <a href="/view_report?file=${report.filename}"
                            class="btn btn-primary"
                            target="_blank">
-                            👁️ 查看报告
+                            查看报告
                         </a>
                         <button onclick="openEmailModal('${report.filename}')"
                                 class="btn btn-email"
@@ -278,13 +278,13 @@
                         ⏮ 首页
                     </button>
                     <button onclick="loadReports(${pagination.page - 1})" ${!pagination.has_prev ? 'disabled' : ''}>
-                        ◀ 上一页
+                        上一页
                     </button>
                     <span class="pagination-info">
                         第 ${pagination.page} / ${pagination.total_pages} 页，共 ${pagination.total} 条
                     </span>
                     <button onclick="loadReports(${pagination.page + 1})" ${!pagination.has_next ? 'disabled' : ''}>
-                        下一页 ▶
+                        下一页
                     </button>
                     <button onclick="loadReports(${pagination.total_pages})" ${!pagination.has_next ? 'disabled' : ''}>
                         末页 ⏭
@@ -341,17 +341,17 @@
                 btn.textContent = '发送';
 
                 if (data.success) {
-                    alert('✅ ' + data.message);
+                    alert('成功：' + data.message);
                     closeEmailModal();
                 } else {
-                    alert(' ' + data.message);
+                    alert('失败：' + data.message);
                 }
             })
             .catch(error => {
                 btn.disabled = false;
                 btn.textContent = '发送';
                 console.error('发送邮件失败:', error);
-                alert('❌ 发送邮件失败，请稍后重试');
+                alert('发送邮件失败，请稍后重试');
             });
         }
 

@@ -314,9 +314,9 @@ class UITestExecutor:
             result['passed'] = all_passed
 
             if all_passed:
-                logger.info(f"✅ 测试通过: {case.get('name')}")
+                logger.info(f"[成功] 测试通过: {case.get('name')}")
             else:
-                logger.error(f"❌ 测试失败: {case.get('name')}")
+                logger.error(f"[失败] 测试失败: {case.get('name')}")
 
         except Exception as e:
             result['passed'] = False

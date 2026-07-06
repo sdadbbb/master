@@ -322,7 +322,7 @@ def get_available_actions():
             'action': 'go_url',
             'name': '访问URL',
             'description': '打开指定的网页地址',
-            'icon': '🌐',
+            'icon': 'globe',
             'category': '导航',
             'params': [
                 {'key': 'url', 'label': 'URL地址', 'type': 'string', 'required': True, 'placeholder': 'https://example.com'}
@@ -332,7 +332,7 @@ def get_available_actions():
             'action': 'click_element',
             'name': '点击元素',
             'description': '通过定位器点击页面元素',
-            'icon': '👆',
+            'icon': 'pointer',
             'category': '操作',
             'params': [
                 {'key': 'locator_type', 'label': '定位方式', 'type': 'select', 'required': True, 'default': 'xpath', 
@@ -345,7 +345,7 @@ def get_available_actions():
             'action': 'input_element',
             'name': '输入文本',
             'description': '在输入框中输入文本',
-            'icon': '⌨️',
+            'icon': 'keyboard',
             'category': '操作',
             'params': [
                 {'key': 'locator_type', 'label': '定位方式', 'type': 'select', 'required': True, 'default': 'xpath',
@@ -359,7 +359,7 @@ def get_available_actions():
             'action': 'input_by_placeholder_only',
             'name': '根据提示内容输入',
             'description': '仅根据提示内筒查找输入框并输入',
-            'icon': '✏️',
+            'icon': 'edit',
             'category': '操作',
             'params': [
                 {'key': 'placeholder', 'label': '输入框提示词', 'type': 'string', 'required': True, 'placeholder': '请输入用户名'},
@@ -371,7 +371,7 @@ def get_available_actions():
             'action': 'input_by_placeholder',
             'name': '弹窗输入',
             'description': '在弹窗的输入框中输入文本',
-            'icon': '💬',
+            'icon': 'chat',
             'category': '操作',
             'params': [
                 {'key': 'aria_label', 'label': '弹窗标题', 'type': 'string', 'required': True, 'placeholder': '新增用户'},
@@ -384,7 +384,7 @@ def get_available_actions():
             'action': 'get_element_text',
             'name': '提取文本',
             'description': '获取元素文本并存储到变量',
-            'icon': '📋',
+            'icon': 'list',
             'category': '变量',
             'params': [
                 {'key': 'locator_type', 'label': '定位方式', 'type': 'select', 'required': True, 'default': 'xpath',
@@ -398,7 +398,7 @@ def get_available_actions():
             'action': 'click_button_by_text',
             'name': '点击按钮',
             'description': '通过按钮文本点击按钮',
-            'icon': '🔘',
+            'icon': 'radio',
             'category': '操作',
             'params': [
                 {'key': 'button_text', 'label': '按钮文本', 'type': 'string', 'required': True, 'placeholder': '确定'},
@@ -410,7 +410,7 @@ def get_available_actions():
             'action': 'click_contains_text',
             'name': '点击包含文本',
             'description': '点击包含指定文本的元素',
-            'icon': '🎯',
+            'icon': 'target',
             'category': '操作',
             'params': [
                 {'key': 'text', 'label': '文本内容', 'type': 'string', 'required': True, 'placeholder': '提交'},
@@ -422,7 +422,7 @@ def get_available_actions():
             'action': 'find_element_by_text',
             'name': '查找元素(精确)',
             'description': '查找精确匹配文本的元素',
-            'icon': '🔍',
+            'icon': 'search',
             'category': '验证',
             'params': [
                 {'key': 'text', 'label': '文本内容', 'type': 'string', 'required': True},
@@ -434,7 +434,7 @@ def get_available_actions():
             'action': 'find_contains_text_element',
             'name': '查找元素(包含)',
             'description': '查找包含文本的元素',
-            'icon': '🔎',
+            'icon': 'search',
             'category': '验证',
             'params': [
                 {'key': 'text', 'label': '文本内容', 'type': 'string', 'required': True},
@@ -446,7 +446,7 @@ def get_available_actions():
             'action': 'find_elements_by_text',
             'name': '查找多个元素',
             'description': '查找所有匹配文本的元素',
-            'icon': '🔎🔎',
+            'icon': 'search-double',
             'category': '验证',
             'params': [
                 {'key': 'text', 'label': '文本内容', 'type': 'string', 'required': True},
@@ -458,7 +458,7 @@ def get_available_actions():
             'action': 'click_button_by_text_in_form',
             'name': '表单内点击按钮',
             'description': '在指定表单内点击按钮',
-            'icon': '📝',
+            'icon': 'document',
             'category': '操作',
             'params': [
                 {'key': 'button_text', 'label': '按钮文本', 'type': 'string', 'required': True},
@@ -472,7 +472,7 @@ def get_available_actions():
             'action': 'click_button_element_by_index',
             'name': '点击第N个按钮',
             'description': '点击匹配的第N个按钮元素',
-            'icon': '🔢',
+            'icon': 'number',
             'category': '操作',
             'params': [
                 {'key': 'button_text', 'label': '按钮文本', 'type': 'string', 'required': True},
@@ -484,7 +484,7 @@ def get_available_actions():
             'action': 'check_login_result',
             'name': '检查登录结果',
             'description': '检查登录成功或失败',
-            'icon': '🔐',
+            'icon': 'lock',
             'category': '验证',
             'params': [
                 {'key': 'success_text', 'label': '成功提示文本', 'type': 'string', 'required': True, 'placeholder': '登录成功'},
@@ -495,7 +495,7 @@ def get_available_actions():
             'action': 'wait_element',
             'name': '等待元素',
             'description': '等待元素出现',
-            'icon': '⏳',
+            'icon': 'hourglass',
             'category': '等待',
             'params': [
                 {'key': 'locator_type', 'label': '定位方式', 'type': 'select', 'required': True, 'default': 'xpath',
@@ -508,7 +508,7 @@ def get_available_actions():
             'action': 'wait',
             'name': '固定等待',
             'description': '强制等待指定秒数',
-            'icon': '⏰',
+            'icon': 'clock',
             'category': '等待',
             'params': [
                 {'key': 'seconds', 'label': '等待秒数', 'type': 'number', 'required': True, 'default': 3}
@@ -518,7 +518,7 @@ def get_available_actions():
             'action': 'assert_text_exists',
             'name': '断言文本存在',
             'description': '验证页面上是否存在指定文本',
-            'icon': '✔️',
+            'icon': 'check',
             'category': '验证',
             'params': [
                 {'key': 'text', 'label': '文本内容', 'type': 'string', 'required': True},

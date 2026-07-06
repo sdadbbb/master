@@ -31,7 +31,7 @@ def test_smart_generate():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ 请求成功!")
+            print(f"[成功] 请求成功!")
             print(f"AI 回复: {result['data'].get('ai_content', 'N/A')[:200]}...")
             print(f"工具调用次数: {result['data']['tool_calls_count']}")
             print(f"成功: {result['data']['success_count']}, 失败: {result['data']['failed_count']}")
@@ -39,17 +39,17 @@ def test_smart_generate():
             if result['data']['tool_results']:
                 print("\n工具执行结果:")
                 for i, tool_result in enumerate(result['data']['tool_results'], 1):
-                    print(f"  {i}. {tool_result['tool']}: {'✅' if tool_result['success'] else '❌'}")
+                    print(f"  {i}. {tool_result['tool']}: {'[成功]' if tool_result['success'] else '[失败]'}")
                     if tool_result['success']:
                         print(f"     - {tool_result['result'].get('message', 'N/A')}")
                     else:
                         print(f"     - 错误: {tool_result['result'].get('error', 'N/A')}")
         else:
-            print(f"❌ 请求失败: {response.status_code}")
+            print(f"[失败] 请求失败: {response.status_code}")
             print(f"响应: {response.text}")
     
     except Exception as e:
-        print(f"❌ 异常: {str(e)}")
+        print(f"[失败] 异常: {str(e)}")
     
     print("\n")
     
@@ -73,14 +73,14 @@ def test_smart_generate():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"✅ 请求成功!")
+            print(f"[成功] 请求成功!")
             print(f"工具调用次数: {result['data']['tool_calls_count']}")
             print(f"成功: {result['data']['success_count']}, 失败: {result['data']['failed_count']}")
         else:
-            print(f"❌ 请求失败: {response.status_code}")
+            print(f"[失败] 请求失败: {response.status_code}")
     
     except Exception as e:
-        print(f"❌ 异常: {str(e)}")
+        print(f"[失败] 异常: {str(e)}")
 
 
 def check_server_status():
@@ -89,19 +89,19 @@ def check_server_status():
         response = requests.get(f"{BASE_URL}/api/llm/config", timeout=5)
         if response.status_code == 200:
             config = response.json()
-            print(f"✅ 服务器运行正常")
+            print(f"[成功] 服务器运行正常")
             print(f"   LLM 配置: {'已配置' if config['data']['configured'] else '未配置'}")
             print(f"   模型: {config['data']['model']}")
             return True
         else:
-            print(f"❌ 服务器响应异常: {response.status_code}")
+            print(f"[失败] 服务器响应异常: {response.status_code}")
             return False
     except requests.exceptions.ConnectionError:
-        print(f"❌ 无法连接到服务器: {BASE_URL}")
+        print(f"[失败] 无法连接到服务器: {BASE_URL}")
         print(f"   请先启动 Flask 应用: python web_ui/app.py")
         return False
     except Exception as e:
-        print(f"❌ 检查服务器状态失败: {str(e)}")
+        print(f"[失败] 检查服务器状态失败: {str(e)}")
         return False
 
 

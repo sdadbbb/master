@@ -113,13 +113,13 @@ class base_page:
         # 依次尝试每个定位器
         for locator in locators:
             try:
-                logger.info(f"🔍 尝试选择器：{locator}")
+                logger.info(f"尝试选择器：{locator}")
                 element = self.wait_element(locator, timeout=10)
                 if element.is_displayed() and element.is_enabled():
                     element.click()
-                    logger.info(f"✅ 成功点击按钮：{button_text}")
+                    logger.info(f"[成功] 成功点击按钮：{button_text}")
                     return True
-                logger.info(f"❌ 未找到按钮：{button_text}")
+                logger.info(f"[失败] 未找到按钮：{button_text}")
             except Exception:
                 continue
 
@@ -166,7 +166,7 @@ class base_page:
         """
         locator = (By.XPATH, f"//{tag_name}[contains(text(), '{text}')]")
         element = self.wait_element(locator, timeout)
-        logger.info(f"✅ 找到包含文本 '{text}' 的 {tag_name} 元素")
+        logger.info(f"[成功] 找到包含文本 '{text}' 的 {tag_name} 元素")
         return element
 
     def find_elements_by_text(self, text, tag_name='*', timeout=10):
@@ -179,7 +179,7 @@ class base_page:
         """
         locator = (By.XPATH, f"//{tag_name}[text()='{text}']")
         elements = self.wait_elements(locator, timeout)
-        logger.info(f"✅ 找到 {len(elements)} 个包含文本 '{text}' 的 {tag_name} 元素")
+        logger.info(f"[成功] 找到 {len(elements)} 个包含文本 '{text}' 的 {tag_name} 元素")
         return elements
 
     def click_button_by_text_in_form(self, button_text, form_locator=None, timeout=10):
@@ -198,7 +198,7 @@ class base_page:
 
         element = self.wait_element(locator, timeout)
         element.click()
-        logger.info(f"✅ 已点击按钮：{button_text}")
+        logger.info(f"[成功] 已点击按钮：{button_text}")
 
     def click_button_element_by_index(self, button_text, index=0, timeout=10):
         """
@@ -229,7 +229,7 @@ class base_page:
                 if index >= len(elements):
                     raise TimeoutException(f"元素索引 {index} 超出范围，只找到 {len(elements)} 个元素")
                 elements[index].click()
-                logger.info(f"✅ 成功点击第{index + 1}个按钮：{button_text}")
+                logger.info(f"[成功] 成功点击第{index + 1}个按钮：{button_text}")
                 return True
             except Exception:
                 continue
